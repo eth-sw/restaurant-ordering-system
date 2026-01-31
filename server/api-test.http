@@ -1,0 +1,12 @@
+### Register a New User
+POST http://localhost:5000/api/auth/register
+Content-Type: application/json
+
+{
+  "name": "Ethan Test",
+  "email": "ethan3@test.com",
+  "password": "password123"
+}
+
+### Get All Users (Check if data is saving)
+GET http://localhost:5000/api/auth/all-users
