@@ -10,3 +10,19 @@ Content-Type: application/json
 
 ### Get All Users (Check if data is saving)
 GET http://localhost:5000/api/auth/all-users
+
+### Login User
+POST http://localhost:5000/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "johnsmith@email.com",
+  "password": "password"
+}
+
+### Get My Profile (Should FAIL without token)
+GET http://localhost:5000/api/auth/me
+
+### Get My Profile (Should SUCCEED with token)
+GET http://localhost:5000/api/auth/me
+x-auth-token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7ImlkIjoiNjk3ZjYwNTI3MzI0ZTA3MTllMWFmNWM1Iiwicm9sZSI6ImN1c3RvbWVyIn0sImlhdCI6MTc2OTk1NzA1MCwiZXhwIjoxNzY5OTYwNjUwfQ._7R0E3R6l7bV1WJ8-A_ZKNfZl6T31EmCn7Pn5-4ByTw
