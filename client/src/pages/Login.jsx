@@ -1,0 +1,97 @@
+import { useState } from 'react';
+import axios from 'axios';
+import { useNavigate, Link } from 'react-router-dom';
+import './Register.css';
+
+/**
+ * Login Component
+ * Handles user authentication by sending credentials to the backend
+ * and stores returned JWT token
+ */
+const Login = () => {
+    // State to hold form inputs
+    const [formData, setFormData] = useState({
+        email: '',
+        password: ''
+    });
+
+    // State to handle success/error messages for the UI
+    const [message, setMessage] = useState('');
+
+    // Hook to navigate user
+    const navigate = useNavigate();
+
+    const { email, password } = formData;
+
+    // Update state dynamically as user types
+    const onChange = (e) => {
+        setFormData({ ...formData, [e.target.name]: e.target.value });
+    };
+
+    // Handles form submission
+    const onSubmit = async (e) => {
+        e.preventDefault(); // Prevent default HTML form reload behaviour
+        try {
+            // Send credentials to backend
+            const res = await axios.post('http://localhost:5000/api/auth/login', formData);
+            // Store received JWT in browser's local storage
+            localStorage.setItem('token', res.data.token);
+            setMessage('Login Successful! Redirecting...');
+            // Delay redirect slightly so user can read the success message
+            setTimeout(() => navigate('/'), 2000);
+        } catch (err) {
+            // Handle errors
+            setMessage('Error: ' + (err.response?.data?.message || 'Login Failed'));
+        }
+    };
+
+    return (
+        <div className="register-container">
+            <div className="register-card">
+                <h2>Welcome Back</h2>
+
+                {message && (
+                    <div className="message-box" style={{
+                        backgroundColor: message.includes('Error') ? '#ffebee' : '#e8f5e9',
+                        color: message.includes('Error') ? '#c62828' : '#2e7d32'
+                    }}>
+                        {message}
+                    </div>
+                )}
+
+                <form onSubmit={onSubmit}>
+                    <div className="form-group">
+                        <label>Email Address</label>
+                        <input
+                            type="email"
+                            name="email"
+                            value={email}
+                            onChange={onChange}
+                            required
+                        />
+                    </div>
+
+                    <div className="form-group">
+                        <label>Password</label>
+                        <input
+                            type="password"
+                            name="password"
+                            value={password}
+                            onChange={onChange}
+                            required
+                        />
+                    </div>
+
+                    <button type="submit" className="btn-primary">
+                        Login
+                    </button>
+                </form>
+                <p style={{ marginTop: '20px', fontSize: '14px', color: '#666' }}>
+                    Don't have an account? <Link to="/register">Register here</Link>
+                </p>
+            </div>
+        </div>
+    );
+};
+
+export default Login;

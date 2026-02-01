@@ -1,0 +1,76 @@
+/* This makes the page fill the entire screen and centers the content */
+.register-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh; /* Full viewport height */
+    background-color: #f4f7f6; /* Light grey background */
+}
+
+/* The white card that holds the form */
+.register-card {
+    background: white;
+    padding: 40px;
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1); /* Soft shadow */
+    width: 100%;
+    max-width: 400px; /* Doesn't get too wide on big screens */
+    text-align: center;
+}
+
+.register-card h2 {
+    margin-bottom: 20px;
+    color: #333;
+}
+
+/* Styling the input fields */
+.form-group {
+    margin-bottom: 20px;
+    text-align: left; /* Labels should be left-aligned */
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: bold;
+    color: #555;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    font-size: 16px;
+    box-sizing: border-box; /* Ensures padding doesn't break width */
+    transition: border-color 0.3s;
+}
+
+.form-group input:focus {
+    border-color: #007bff; /* Blue border when typing */
+    outline: none;
+}
+
+/* The Register Button */
+.btn-primary {
+    width: 100%;
+    padding: 12px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.btn-primary:hover {
+    background-color: #0056b3; /* Darker blue on hover */
+}
+
+.message-box {
+    margin-bottom: 20px;
+    padding: 10px;
+    border-radius: 5px;
+    font-size: 14px;
+}
