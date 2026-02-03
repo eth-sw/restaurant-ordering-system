@@ -3,8 +3,8 @@ POST http://localhost:5000/api/auth/register
 Content-Type: application/json
 
 {
-  "name": "Ethan Test",
-  "email": "ethan3@test.com",
+  "name": "Test User",
+  "email": "testuser@email.com",
   "password": "password123"
 }
 
@@ -16,8 +16,8 @@ POST http://localhost:5000/api/auth/login
 Content-Type: application/json
 
 {
-  "email": "johnsmith@email.com",
-  "password": "password"
+  "email": "testuser@email.com",
+  "password": "password123"
 }
 
 ### Get My Profile (Should FAIL without token)
@@ -25,4 +25,35 @@ GET http://localhost:5000/api/auth/me
 
 ### Get My Profile (Should SUCCEED with token)
 GET http://localhost:5000/api/auth/me
-x-auth-token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7ImlkIjoiNjk3ZjYwNTI3MzI0ZTA3MTllMWFmNWM1Iiwicm9sZSI6ImN1c3RvbWVyIn0sImlhdCI6MTc2OTk1NzA1MCwiZXhwIjoxNzY5OTYwNjUwfQ._7R0E3R6l7bV1WJ8-A_ZKNfZl6T31EmCn7Pn5-4ByTw
+x-auth-token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7ImlkIjoiNjk3ZjYwNTI3MzI0ZTA3MTllMWFmNWM1Iiwicm9sZSI6ImN1c3RvbWVyIn0sImlhdCI6MTc3MDA1MDE3NiwiZXhwIjoxNzcwMDUzNzc2fQ.zHPW5CQ0nuLx8FI41Vu1IhzGY0pSeS6dAgdu2VbeaYE
+
+### Create Restaurant
+POST http://localhost:5000/api/restaurants
+Content-Type: application/json
+x-auth-token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7ImlkIjoiNjk3ZjYwNTI3MzI0ZTA3MTllMWFmNWM1Iiwicm9sZSI6ImN1c3RvbWVyIn0sImlhdCI6MTc3MDA1MDE3NiwiZXhwIjoxNzcwMDUzNzc2fQ.zHPW5CQ0nuLx8FI41Vu1IhzGY0pSeS6dAgdu2VbeaYE
+
+{
+  "name": "Test Restaurant",
+  "address": "123 Test Lane",
+  "cuisine": "British"
+}
+
+### Get My Restaurant
+GET http://localhost:5000/api/restaurants/mine
+x-auth-token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7ImlkIjoiNjk3ZjYwNTI3MzI0ZTA3MTllMWFmNWM1Iiwicm9sZSI6ImN1c3RvbWVyIn0sImlhdCI6MTc3MDA1MDE3NiwiZXhwIjoxNzcwMDUzNzc2fQ.zHPW5CQ0nuLx8FI41Vu1IhzGY0pSeS6dAgdu2VbeaYE
+
+### App Menu Item
+POST http://localhost:5000/api/menu
+Content-Type: application/json
+x-auth-token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7ImlkIjoiNjk3ZjYwNTI3MzI0ZTA3MTllMWFmNWM1Iiwicm9sZSI6ImN1c3RvbWVyIn0sImlhdCI6MTc3MDA2MzUxNiwiZXhwIjoxNzcwMDY3MTE2fQ.HxYY67NbnV0knqRyAp8O5_PjpBVv1effIZqHL8C5To4
+
+{
+  "name": "Margherita",
+  "description": "Tomato sauce, mozzarella, basil",
+  "price": 12.99,
+  "category": "Pizza"
+}
+
+### Get My Menu
+GET http://localhost:5000/api/menu
+x-auth-token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7ImlkIjoiNjk3ZjYwNTI3MzI0ZTA3MTllMWFmNWM1Iiwicm9sZSI6ImN1c3RvbWVyIn0sImlhdCI6MTc3MDA2MzUxNiwiZXhwIjoxNzcwMDY3MTE2fQ.HxYY67NbnV0knqRyAp8O5_PjpBVv1effIZqHL8C5To4
