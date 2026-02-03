@@ -1,18 +1,25 @@
 const express = require('express');
 const router = express.Router();
-const bcrypt = require('bcryptjs');
+const bcrypt = require('bcryptjs'); // Password hashing library
+const jwt = require('jsonwebtoken'); // Session token generator library
 const User = require('../models/User');
-const jwt = require('jsonwebtoken');
 const auth = require('../middleware/auth');
 
-// @route   POST api/auth/register
-// @desc    Register a new user
-// @access  Public
+/**
+ * Register a new user
+ * Validates input, encrypts password and saves user to database
+ *
+ * @param req HTTP Request object (body containing name, email, password)
+ * @param res HTTP Response object
+ * @returns {*} 201 if successful, 400 if user exists, 500 for server error
+ *
+ * @author Ethan Swain
+ */
 router.post('/register', async (req, res) => {
     const { name, email, password } = req.body;
 
     try {
-        // Check if user already exists
+        // Check if user already exists from email
         let user = await User.findOne({ email });
         if (user) {
             return res.status(400).json({ message: 'User already exists'});
@@ -25,7 +32,7 @@ router.post('/register', async (req, res) => {
             password
         });
 
-        // Encrypt the password
+        // Encrypt password
         const salt = await bcrypt.genSalt(10);
         user.password = await bcrypt.hash(password, salt);
 
@@ -40,14 +47,18 @@ router.post('/register', async (req, res) => {
     }
 });
 
-// @route   POST api/auth/login
-// @desc    Authenticate user and get token
-// @access  Public
+/**
+ * Authenticate user and get token
+ * Checks credentials and signs the JWT
+ *
+ * @param req HTTP Request object (body containing email, password)
+ * @param res HTTP Response object
+ * @returns {*} JSON object containing JWT token
+ */
 router.post('/login', async (req, res) => {
     const { email, password } = req.body;
 
     try {
-        // Check if user exists
         let user = await User.findOne({ email });
         if (!user) {
             return res.status(400).json({ message: 'Invalid credentials' });
@@ -83,14 +94,17 @@ router.post('/login', async (req, res) => {
     }
 });
 
-// @route   GET api/auth/all-users
-// @desc    Retrieve all users (for testing/debugging)
-// @access  Public
+/**
+ * Retrieve all users
+ * Used for testing/debugging
+ *
+ * @param req HTTP Request object
+ * @param res HTTP Response object
+ * @returns {*} JSON array of all user objects (without passwords)
+ */
 router.get('/all-users', async (req, res) => {
     try {
-        // Find all users in the database
-        // .select('-password') removes password field from results so don't expose hashes
-        const users = await User.find().select('-password');
+        const users = await User.find().select('-password'); // Removes passwords
         res.json(users);
     } catch (err) {
         console.error(err.message);
@@ -98,13 +112,16 @@ router.get('/all-users', async (req, res) => {
     }
 });
 
-// @route   GET api/auth/me
-// @desc    Get current user's profile
-// @access  Private (protected by auth in middleware)
+/**
+ * Get current user's profile
+ * Uses ID from decoded JWT to get users details
+ *
+ * @param req HTTP Request object (requires the token)
+ * @param res HTTP Response object
+ * @returns {*} JSON object of logged-in user
+ */
 router.get('/me', auth, async (req, res) => {
     try {
-        // Find user by ID (req.user.id comes from middleware)
-        // .select('-password') ensures we don't send password back
         const user = await User.findById(req.user.id).select('-password');
         res.json(user);
     } catch (err) {

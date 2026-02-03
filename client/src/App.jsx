@@ -2,7 +2,17 @@ import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import Register from './pages/Register';
 import Login from './pages/Login';
 import Home from './pages/Home';
+import CreateRestaurant from './pages/CreateRestaurant';
+import AddMenu from './pages/AddMenu';
 
+/**
+ * Main App Component.
+ * Sets up React Router, Nav Bar, and defines route paths
+ *
+ * @returns {React.JSX.Element} Root component containing router
+ *
+ * @author Ethan Swain
+ */
 function App() {
     return (
         <Router>
@@ -17,6 +27,8 @@ function App() {
                     <Route path="/" element={<Home />} />
                     <Route path="/register" element={<Register />} />
                     <Route path="/login" element={<Login />} />
+                    <Route path="/create-restaurant" element={<CreateRestaurant />} />
+                    <Route path="/add-menu" element={<AddMenu />} />
                 </Routes>
             </div>
         </Router>

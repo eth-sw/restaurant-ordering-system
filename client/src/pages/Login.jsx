@@ -4,9 +4,13 @@ import { useNavigate, Link } from 'react-router-dom';
 import './Register.css';
 
 /**
- * Login Component
- * Handles user authentication by sending credentials to the backend
- * and stores returned JWT token
+ * Login Component.
+ * Handles user authentication and stored returned JWT token.
+ * Allows for persistence during a session.
+ *
+ * @returns {React.JSX.Element} Login form
+ *
+ * @author Ethan Swain
  */
 const Login = () => {
     // State to hold form inputs
@@ -15,10 +19,10 @@ const Login = () => {
         password: ''
     });
 
-    // State to handle success/error messages for the UI
+    // State to handle success/error messages
     const [message, setMessage] = useState('');
 
-    // Hook to navigate user
+    // Hook to navigate user after logging in successfully
     const navigate = useNavigate();
 
     const { email, password } = formData;
@@ -30,17 +34,17 @@ const Login = () => {
 
     // Handles form submission
     const onSubmit = async (e) => {
-        e.preventDefault(); // Prevent default HTML form reload behaviour
+        e.preventDefault(); // Prevents default HTML form reload
         try {
             // Send credentials to backend
             const res = await axios.post('http://localhost:5000/api/auth/login', formData);
-            // Store received JWT in browser's local storage
+
+            // Restaurant received JWT in browser's local storage
             localStorage.setItem('token', res.data.token);
+
             setMessage('Login Successful! Redirecting...');
-            // Delay redirect slightly so user can read the success message
-            setTimeout(() => navigate('/'), 2000);
+            setTimeout(() => navigate('/'), 1500);
         } catch (err) {
-            // Handle errors
             setMessage('Error: ' + (err.response?.data?.message || 'Login Failed'));
         }
     };
@@ -61,8 +65,9 @@ const Login = () => {
 
                 <form onSubmit={onSubmit}>
                     <div className="form-group">
-                        <label>Email Address</label>
+                        <label htmlFor="email">Email Address</label>
                         <input
+                            id="email"
                             type="email"
                             name="email"
                             value={email}
@@ -72,8 +77,9 @@ const Login = () => {
                     </div>
 
                     <div className="form-group">
-                        <label>Password</label>
+                        <label htmlFor="password">Password</label>
                         <input
+                            id="password"
                             type="password"
                             name="password"
                             value={password}

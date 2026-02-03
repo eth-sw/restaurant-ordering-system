@@ -4,42 +4,45 @@ import { useNavigate } from 'react-router-dom';
 import './Register.css';
 
 /**
- * Register Component
- * Displays a sign-up form and handles the user creation process via the API
+ * Register Component.
+ * Displays a sign-up form and handles user creation process via the API.
+ * Redirects to Login page if successful.
+ *
+ * @returns {React.JSX.Element} Registration form
+ *
+ * @author Ethan Swain
  */
 const Register = () => {
-    // State for managing form input values
+    // State to hold form input values
     const [formData, setFormData] = useState({
         name: '',
         email: '',
         password: ''
     });
 
-    // State for feedback messages (Success or Error)
+    // State to handle success/error messages
     const [message, setMessage] = useState('');
 
-    // Hook for redirection after successful registration
+    // Hook to redirect user after registering successfully
     const navigate = useNavigate();
 
-    // Destructure values for easier access in the JSX below
     const { name, email, password } = formData;
 
-    // Handle input changes, updates specific field in the state object
+    // Update state dynamically as user types
     const onChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
     };
 
     // Handle form submission
     const onSubmit = async (e) => {
-        e.preventDefault(); // Prevent page reload
+        e.preventDefault(); // Prevents default HTML form reload
         try {
-            // Send POST request to backend with form data
+            // Send credentials to backend
             await axios.post('http://localhost:5000/api/auth/register', formData);
+
             setMessage('Registration Successful! Redirecting...');
-            // Delay redirect slightly so user can read the success message
-            setTimeout(() => navigate('/login'), 2000);
+            setTimeout(() => navigate('/login'), 1500);
         } catch (err) {
-            // Handle errors
             setMessage('Error: ' + (err.response?.data?.message || 'Server Error'));
         }
     };
@@ -60,8 +63,9 @@ const Register = () => {
 
                 <form onSubmit={onSubmit}>
                     <div className="form-group">
-                        <label>Full Name</label>
+                        <label htmlFor="name">Full Name</label>
                         <input
+                            id="name"
                             type="text"
                             name="name"
                             value={name}
@@ -72,8 +76,9 @@ const Register = () => {
                     </div>
 
                     <div className="form-group">
-                        <label>Email Address</label>
+                        <label htmlFor="email">Email Address</label>
                         <input
+                            id="email"
                             type="email"
                             name="email"
                             value={email}
@@ -84,8 +89,9 @@ const Register = () => {
                     </div>
 
                     <div className="form-group">
-                        <label>Password</label>
+                        <label htmlFor="password">Password</label>
                         <input
+                            id="password"
                             type="password"
                             name="password"
                             value={password}

@@ -1,5 +1,10 @@
 const mongoose = require('mongoose');
 
+/**
+ * User Schema Blueprint
+ *
+ * @author Ethan Swain
+ */
 const UserSchema = new mongoose.Schema({
     name: {
         type: String,

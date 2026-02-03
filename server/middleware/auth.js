@@ -1,29 +1,37 @@
 const jwt = require('jsonwebtoken');
 
 /**
- * This function request to private routes
- * It checks for a valid JWT token in the header
+ * Intercepts requests to private routes.
+ * Verifies JWT token from header, attaches decoded user data to request object.
+ *
+ * @param req HTTP Request object
+ * @param res HTTP Response object
+ * @param next Callback function to pass control to next middleware in stack
+ * @returns {*} 401 if auth fails, otherwise calls next() to proceed
+ *
+ * @author Ethan Swain
  */
-module.exports = function(req, res, next) {
-    // Get token from the header
+module.exports = function authMiddleware(req, res, next) {
+    // Get token from header
     const token = req.header('x-auth-token');
 
-    // Check if no token is present
+    // Check if token exists
     if (!token) {
-        return res.status(401).json({ message: 'No token, authorisation denied' });
+        return res.status(401).json({ message: 'No token. Authorisation denied' });
     }
 
-    // Verify the token
+    // Verify token is valid
     try {
-        // Decode the token using the Secret Key
+        // Decode token using the Secret Key
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-        // Attach user's ID from token to request object
-        // Allows route handler to know who is logged in
+        // Attach user payload to the request object so it can be used in all routes
         req.user = decoded.user;
 
-        next(); // Move on to the actual route handler
+        // Go to route handler
+        next();
     } catch (err) {
+        console.error("Middleware Authorisation Error:", err.message)
         res.status(401).json({ message: 'Token is not valid' });
     }
 };
