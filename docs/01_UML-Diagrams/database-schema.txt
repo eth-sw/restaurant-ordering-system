@@ -1,0 +1,58 @@
+@startuml
+
+entity "User" as user {
+    * _id : ObjectId
+    --
+    * username : String
+    * email : String
+    * password : String
+    * role : Enum(user, admin)
+    * createdAt : DateTime
+}
+
+entity "Restaurant" as restaurant {
+    * _id : ObjectId
+    --
+    * owner : ObjectId <<FK>>
+    * name : String
+    * address : String
+    * cuisineType : String
+    * created_at : DateTime
+}
+
+entity "MenuItem" as menu_item {
+    * _id : ObjectId
+    --
+    * restaurant : ObjectId <<FK>>
+    * name : String
+    * description : String
+    * price : Number
+    * category : String
+    * image : String
+    * available : Boolean
+}
+
+entity "Order" as order {
+    * _id : ObjectId
+    --
+    * user : ObjectId <<FK>>
+    * restaurant : ObjectId <<FK>>
+    * status : Enum(PENDING, COOKING, DELIVERING, DELIVERED)
+    * total_amount : Decimal
+    * created_at : DateTime
+}
+
+entity "DeliveryZone" as zone {
+    * _id : ObjectId
+    --
+    * restaurant : ObjectId <<FK>>
+    * boundaries : GeoJSON Polygon
+}
+
+user ||..o{ restaurant : "owns"
+restaurant ||..|{ menu_item : "has"
+user ||..o{ order : "places"
+restaurant ||..o{ order : "receives"
+restaurant ||..o{ zone : "defines"
+
+@enduml
