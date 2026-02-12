@@ -1,0 +1,18 @@
+@startwbs
+* A Web-Based Restaurant Ordering System
+** Public
+*** Home Page (/)
+*** Login (/login)
+*** Register (/register)
+** Customer (Protected)
+*** Restaurant Menu (/restaurant/:id)
+*** Checkout (/checkout)
+*** Order Tracking (/orders/:id)
+*** User Profile (/profile)
+*** Logout (/logout)
+** Admin (Protected)
+*** Create Restaurant (/create-restaurant)
+*** Add Menu Item (/add-menu)
+*** Admin Dashboard (/admin/dashboard)
+*** Logout (/logout)
+@endwbs
