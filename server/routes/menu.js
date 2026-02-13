@@ -65,4 +65,21 @@ router.get('/', auth, async (req, res) => {
     }
 });
 
+/**
+ * Get all menu items for a specific restaurant by its ID
+ * Used for public customer menu view
+ *
+ * @param req HTTP Request object
+ * @param res HTTP Response object
+ * @returns {*} JSON array of menu items
+ */
+router.get('/:restaurantId', async (req, res) => {
+    try {
+        const items = await MenuItem.find({ restaurant: req.params.restaurantId });
+        res.json(items);
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Server Error');
+    }
+})
 module.exports = router;
