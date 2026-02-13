@@ -14,7 +14,7 @@ const Restaurant = require('../models/Restaurant');
  * @author Ethan Swain
  */
 router.post('/', auth, async (req, res) => {
-    const { name, address, cuisine } = req.body;
+    const { name, address, cuisine, deliveryZone } = req.body;
 
     try {
         // Check if user already has a restaurant
@@ -28,7 +28,8 @@ router.post('/', auth, async (req, res) => {
             owner: req.user.id,
             name,
             address,
-            cuisine
+            cuisine,
+            deliveryZone
         });
 
         await restaurant.save();
@@ -61,5 +62,23 @@ router.get('/mine', auth, async (req, res) => {
         res.status(500).send('Server Error');
     }
 });
+
+/**
+ * Get all restaurants
+ * Used for debugging or displaying a full list without location filtering
+ *
+ * @param req HTTP Request object
+ * @param res HTTP Response object
+ * @returns {*} JSON array of all restaurants
+ */
+router.get('/', async (req, res) => {
+    try {
+        const restaurants = await Restaurant.find();
+        res.json(restaurants);
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Server Error');
+    }
+})
 
 module.exports = router;

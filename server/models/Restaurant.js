@@ -27,7 +27,33 @@ const RestaurantSchema = new mongoose.Schema({
     createdAt: {
         type: Date,
         default: Date.now
+    },
+    location: {
+        type: {
+            type: String,
+            enum: ['Point'],
+            default: 'Point'
+        },
+        coordinates: {
+            type: [Number],
+            index: '2dsphere'
+        }
+    },
+
+    deliveryZone: {
+        type: {
+            type: String,
+            enum: ['Polygon'],
+            default: 'Polygon'
+        },
+        coordinates: {
+            type: [[[Number]]],
+            required: false
+        }
     }
 });
+
+// Enables spatial queries ($geoIntersects)
+RestaurantSchema.index({ deliveryZone: '2dsphere' });
 
 module.exports = mongoose.model('Restaurant', RestaurantSchema);
