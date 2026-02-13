@@ -1,0 +1,53 @@
+@startuml
+actor Customer
+participant "Frontend (React)" as FE
+participant "Backend API (Node)" as BE
+participant "Google Maps API" as GMaps
+participant "Database (MongoDB)" as DB
+participant "Stripe API" as Stripe
+
+' Entering Address
+Customer -> FE : Enter Delivery Address
+FE -> BE : POST /api/validate-location {address}
+activate BE
+
+' Finding Coordinates of Address
+BE -> GMaps : Geocoding Request (Address -> Lat/Long)
+activate GMaps
+GMaps --> BE : Returns Coordinates
+deactivate GMaps
+
+' Retrieving Delivery Zone Coordinates
+BE -> DB : Fetch DeliveryZone (Polygon)
+activate DB
+DB --> BE : Returns Polygon Data
+deactivate DB
+
+' Checks Address is in Delivery Zone
+BE -> BE : Validate Adress is in Polygon Area
+alt Location Outside Zone
+    BE --> FE : Error: "Sorry, we do not deliver here"
+else Location Inside Zone
+    BE -> GMaps : Distance Matrix Request (Origin -> Dest)
+    activate GMaps
+    GMaps --> BE : Returns Duration (w/ Traffic)
+    deactivate GMaps
+    BE --> FE : Success: Returns ETA & Delivery Fee
+end
+deactivate BE
+
+' Payment Process
+Customer -> FE : Click "Pay & Order"
+FE -> Stripe : Process Payment
+activate Stripe
+Stripe --> FE : Payment Success Token
+deactivate Stripe
+
+' Confirming the Order
+FE -> BE : POST /api/orders {token, basket, address}
+activate BE
+BE -> DB : Save Order (Status: Pending)
+BE --> FE : Order Confirmation
+deactivate BE
+
+@enduml

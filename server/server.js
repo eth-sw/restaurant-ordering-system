@@ -19,6 +19,7 @@ app.use(express.json()); // Parses JSON payloads from requests
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/restaurants', require('./routes/restaurants'));
 app.use('/api/menu', require('./routes/menu'));
+app.use('/api/geofence', require('./routes/geofence'));
 
 /**
  * Backend and Database Status Check
