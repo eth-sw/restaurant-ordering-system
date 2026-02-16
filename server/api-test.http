@@ -42,6 +42,12 @@ x-auth-token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7ImlkIjoiNjk3ZjYwN
 GET http://localhost:5000/api/restaurants/mine
 x-auth-token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7ImlkIjoiNjk3ZjYwNTI3MzI0ZTA3MTllMWFmNWM1Iiwicm9sZSI6ImN1c3RvbWVyIn0sImlhdCI6MTc3MDA1MDE3NiwiZXhwIjoxNzcwMDUzNzc2fQ.zHPW5CQ0nuLx8FI41Vu1IhzGY0pSeS6dAgdu2VbeaYE
 
+### Get All Restaurants (Public)
+GET http://localhost:5000/api/restaurants
+
+### Get Menu by ID (Public)
+GET http://localhost:5000/api/menu/6982019f401055a9f2fdc4df
+
 ### App Menu Item
 POST http://localhost:5000/api/menu
 Content-Type: application/json

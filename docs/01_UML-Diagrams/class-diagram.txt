@@ -1,0 +1,78 @@
+@startuml
+
+package "Server / Backend" {
+
+  ' ----- MODELS -----
+    package "Models" {
+        class User {
+            + name: String
+            + email: String
+            + password: String
+            + role: Enum ['customer', 'admin', 'restaurant']
+            + createdAt: Date
+        }
+
+    class Restaurant {
+        + owner: ObjectId <User>
+        + name: String
+        + address: String
+        + cuisine: String
+        + createdAt: Date
+    }
+
+    class MenuItem {
+        + restaurant: ObjectId <Restaurant>
+        + name: String
+        + description: String
+        + price: Number
+        + category: Enum ['Pizza', 'Burger',...]
+        + isAvailable: Boolean
+    }
+}
+
+  ' ----- ROUTES -----
+    package "Routes" {
+        class "auth.js" as AuthRoute {
+            + POST /register()
+            + POST /login()
+            + GET /me()
+            + GET /all-users()
+        }
+
+        class "restaurants.js" as RestRoute {
+            + POST / (createRestaurant)
+            + GET /mine (getMyRestaurant)
+        }
+    
+        class "menu.js" as MenuRoute {
+            + POST / (addMenuItem)
+            + GET / (getMenuItems)
+        }
+        
+        class "geofence.js" as GeoRoute {
+            + POST /validate-location()
+            + GET /eta()
+        }
+    }
+}
+
+' ----- RELATIONSHIPS -----
+
+' Between Models
+User "1" -- "0..1" Restaurant : owns >
+Restaurant "1" *-- "0..*" MenuItem : contains >
+
+' Routes to Models
+AuthRoute ..> User : uses
+RestRoute ..> Restaurant : manages
+RestRoute ..> User : references
+MenuRoute ..> MenuItem : manages
+MenuRoute ..> Restaurant : references
+
+' Geofence Note
+note bottom of GeoRoute
+  Interacts with 
+  Google Maps API
+end note
+
+@enduml

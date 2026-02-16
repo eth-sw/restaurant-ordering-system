@@ -1,0 +1,53 @@
+@startuml
+left to right direction
+actor "Customer" as C
+actor "Restaurant Admin" as A
+
+rectangle "Web-Based Restaurant Ordering System" {
+  
+  ' ----- CUSTOMER -----
+    package "Account Management" {
+        usecase "Register / Login" as UC1
+        usecase "Manage Profile" as UC2
+    }
+
+    package "Ordering System" {
+        usecase "Browse Menu" as UC3
+        usecase "Add Items to Basket" as UC4
+        usecase "Place Order" as UC5
+        usecase "Pay for Order (Stripe)" as UC6
+        usecase "View Order Status (Real-time)" as UC7
+    }
+
+    package "Geospatial Logic" {
+        usecase "Validate Delivery Location" as UC8
+        usecase "Calculate ETA (Google Maps)" as UC9
+    }
+
+    ' ----- RESTAURANT ADMIN -----
+    package "Admin Dashboard" {
+        usecase "Manage Menu Items" as UC10
+        usecase "View Incoming Orders" as UC11
+        usecase "Update Order Status" as UC12
+        usecase "Configure Delivery Zone" as UC13
+    }
+}
+
+' Relationships
+C --> UC1
+C --> UC2
+C --> UC3
+C --> UC4
+C --> UC5
+C --> UC7
+
+UC5 ..> UC8 : <<include>>
+UC5 ..> UC9 : <<include>>
+UC5 ..> UC6 : <<include>>
+
+A --> UC10
+A --> UC11
+A --> UC12
+A --> UC13
+
+@enduml
