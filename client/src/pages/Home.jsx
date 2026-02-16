@@ -116,6 +116,23 @@ const Home = () => {
                     <h2 style={{ color: '#2e7d32', fontSize: '28px' }}>{restaurant.name}</h2>
                     <p>Address: {restaurant.address} | Cuisine: {restaurant.cuisine}</p>
 
+                    <div style={{ margin: '20px 0' }}>
+                        <Link to={`/restaurant/${restaurant._id}/orders`}>
+                            <button style={{
+                                padding: '12px 24px',
+                                fontSize: '1.1rem',
+                                background: '#2196F3',
+                                color: 'white',
+                                border: 'none',
+                                borderRadius: '5px',
+                                cursor: 'pointer',
+                                boxShadow: '0 2px 5px rgba(0,0,0,0.2)'
+                            }}>
+                                View Incoming Orders
+                            </button>
+                        </Link>
+                    </div>
+
                     <div style={{ marginTop: '30px', borderTop: '1px solid #eee', paddingTop: '20px' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
                             <h3>Your Menu</h3>

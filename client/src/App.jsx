@@ -7,7 +7,9 @@ import Home from './pages/Home';
 import CreateRestaurant from './pages/CreateRestaurant';
 import AddMenu from './pages/AddMenu';
 import CustomerMenu from './pages/CustomerMenu';
-import Checkout from "./pages/Checkout.jsx";
+import Checkout from "./pages/Checkout";
+import RestaurantOrders from "./pages/RestaurantOrders";
+import OrderHistory from "./pages/OrderHistory";
 
 /**
  * Main App Component.
@@ -25,6 +27,7 @@ function App() {
                     {/* Nav Bar */}
                     <nav style={{ padding: '20px', backgroundColor: '#f0f0f0', marginBottom: '20px', borderBottom: '1px solid #ccc' }}>
                         <Link to="/" style={{ marginRight: '15px', fontWeight: 'bold' }}>Home</Link>
+                        <Link to="/orders" style={{ marginRight: '15px', color: '#1565c0' }}>My Orders</Link>
                         <Link to="/register" style={{ marginRight: '15px' }}>Register</Link>
                         <Link to="/login" style={{ marginRight: '15px' }}>Login</Link>
                         <Link to="/checkout" style={{ fontWeight: 'bold', color: '#2e7d32' }}>View Basket</Link>
@@ -39,6 +42,8 @@ function App() {
                         <Route path="/add-menu" element={<AddMenu />} />
                         <Route path="/menu/:id" element={<CustomerMenu />} />
                         <Route path="/checkout" element={<Checkout />} />
+                        <Route path="/restaurant/:id/orders" element={<RestaurantOrders />} />
+                        <Route path="/orders" element={<OrderHistory />} />
                     </Routes>
                 </div>
             </Router>
