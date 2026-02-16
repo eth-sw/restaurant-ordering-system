@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
+import {useEffect, useState} from 'react';
 import axios from 'axios';
-import { useNavigate, Link } from 'react-router-dom';
+import {Link, useNavigate} from 'react-router-dom';
 import AddressCheck from '../components/AddressCheck';
 
 /**
@@ -56,7 +56,7 @@ const Home = () => {
                     }
 
                 } catch (err) {
-                    console.info("User is not a restaurant owner.");
+                    console.info("User is not a restaurant owner.", err.message);
                 }
 
             } catch (err) {

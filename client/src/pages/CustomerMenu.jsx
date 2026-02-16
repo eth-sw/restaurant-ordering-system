@@ -1,5 +1,5 @@
-import { useEffect, useState, useContext } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import {useContext, useEffect, useState} from 'react';
+import {useNavigate, useParams} from 'react-router-dom';
 import axios from 'axios';
 import BasketContext from '../context/BasketContext.jsx';
 
@@ -94,27 +94,30 @@ const CustomerMenu = () => {
             </div>
 
             {basketItems.length > 0 && (
-                <div style={{
-                    position: 'fixed',
-                    bottom: '20px',
-                    left: '50%',
-                    transform: 'translateX(-50%)',
-                    background: '#2e7d32',
-                    color: 'white',
-                    padding: '15px 30px',
-                    borderRadius: '30px',
-                    boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
-                    display: 'flex',
-                    gap: '20px',
-                    alignItems: 'center',
-                    cursor: 'pointer',
-                    zIndex: 1000
-                }} onClick={() => navigate('/checkout')}>
+                <button
+                    onClick ={() => navigate('/checkout')}
+                    style={{
+                        position: 'fixed',
+                        bottom: '20px',
+                        left: '50%',
+                        transform: 'translateX(-50%)',
+                        background: '#2e7d32',
+                        color: 'white',
+                        padding: '15px 30px',
+                        borderRadius: '30px',
+                        boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
+                        display: 'flex',
+                        gap: '20px',
+                        alignItems: 'center',
+                        cursor: 'pointer',
+                        zIndex: 1000
+                    }}
+                >
                     <span style={{ fontWeight: 'bold' }}>{basketItems.reduce((a, b) => a + b.qty, 0)} items</span>
                     <span>|</span>
                     <span style={{ fontWeight: 'bold' }}>£{getBasketTotal().toFixed(2)}</span>
                     <span style={{ marginLeft: '10px' }}>View Basket &rarr;</span>
-                </div>
+                </button>
             )}
         </div>
     );

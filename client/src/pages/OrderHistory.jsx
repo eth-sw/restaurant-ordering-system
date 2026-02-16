@@ -1,6 +1,21 @@
-import { useEffect, useState } from 'react';
+import {useEffect, useState} from 'react';
 import axios from 'axios';
-import { useNavigate } from 'react-router-dom';
+import {useNavigate} from 'react-router-dom';
+
+/**
+ * Helper function for colour of order status
+ *
+ * @param status Status of the order
+ * @returns {string} Hex colour code linked to status
+ */
+const getStatusColor = (status) => {
+    switch (status) {
+        case 'Delivered': return '#4caf50'; // Green
+        case 'Cooking': return '#ff9800'; // Orange
+        case 'Cancelled': return '#f44336'; // Red
+        default: return '#2196f3'; // Blue
+    }
+};
 
 /**
  * OrderHistory Component
@@ -71,10 +86,7 @@ const OrderHistory = () => {
                                     color: 'white',
                                     fontWeight: 'bold',
                                     fontSize: '0.9em',
-                                    background:
-                                        order.status === 'Delivered' ? '#4caf50' :
-                                        order.status === 'Cooking' ? '#ff9800' :
-                                        order.status === 'Cancelled' ? '#f44336' : '#2196f3'
+                                    background: getStatusColor(order.status)
                                 }}>
                                     {order.status}
                                 </span>
@@ -82,7 +94,7 @@ const OrderHistory = () => {
 
                             <div style={{ marginBottom: '15px' }}>
                                 {order.items.map((item, idx) => (
-                                    <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '5px'}}>
+                                    <div key={item._id || `${order._id}-${idx}`} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '5px'}}>
                                         <span>{item.qty}x {item.name}</span>
                                         <span>£{(item.price * item.qty).toFixed(2)}</span>
                                     </div>
@@ -91,7 +103,7 @@ const OrderHistory = () => {
 
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '10px', borderTop: '1px solid #eee' }}>
                                 <span style={{ fontWeight: 'bold', fontSize: '1.2em' }}>Total: £{order.totalAmount.toFixed(2)}</span>
-                                <button onClick={() => window.location.reload()} style={{ background: 'none', border: 'none', color: '#1976d2', cursor: 'pointer', textDecoration: 'underline' }}>
+                                <button onClick={() => globalThis.location.reload()} style={{ background: 'none', border: 'none', color: '#1976d2', cursor: 'pointer', textDecoration: 'underline' }}>
                                     Refresh
                                 </button>
                             </div>

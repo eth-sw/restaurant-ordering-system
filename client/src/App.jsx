@@ -1,5 +1,5 @@
-import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
-import { BasketProvider } from './context/BasketContext'
+import {BrowserRouter as Router, Link, Route, Routes} from 'react-router-dom';
+import {BasketProvider} from './context/BasketContext'
 
 import Register from './pages/Register';
 import Login from './pages/Login';

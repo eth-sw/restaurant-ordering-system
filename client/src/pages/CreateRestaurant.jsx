@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import {useState} from 'react';
 import axios from 'axios';
-import { useNavigate } from 'react-router-dom';
+import {useNavigate} from 'react-router-dom';
 import DeliveryZoneMap from '../components/DeliveryZoneMap';
 import './Register.css';
 
@@ -141,7 +141,7 @@ const CreateRestaurant = () => {
 
                     <div className="form-group" style={{ marginTop: '20px' }}>
                         <label style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold' }}>
-                            Delivery Zone
+                            Delivery Zone{' '}
                             <span style={{ fontWeight: 'normal', fontSize: '0.9em', color: '#666', marginLeft: '10px' }}>
                                 (Click points to shape area, click first point to close)
                             </span>

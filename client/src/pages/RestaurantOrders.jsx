@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
+import {useEffect, useState} from 'react';
 import axios from 'axios';
-import { useParams, useNavigate } from 'react-router-dom';
+import {useNavigate, useParams} from 'react-router-dom';
 
 /**
  * RestaurantOrders component
@@ -57,6 +57,7 @@ const RestaurantOrders = () => {
                 order._id === orderId ? {...order, status: newStatus} : order
             ));
         } catch (err) {
+            console.error("Failed to update status:", err);
             alert("Error updating status");
         }
     };
@@ -104,7 +105,7 @@ const RestaurantOrders = () => {
 
                             <div style={{background: '#f9f9f9', padding: '10px', margin: '10px 0'}}>
                                 {order.items.map((item, index) => (
-                                    <div key={index} style={{display: 'flex', justifyContent: 'space-between'}}>
+                                    <div key={index._id || index} style={{display: 'flex', justifyContent: 'space-between'}}>
                                         <span>{item.qty}x {item.name}</span>
                                         <span>£{(item.price * item.qty).toFixed(2)}</span>
                                     </div>
