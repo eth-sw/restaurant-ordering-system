@@ -1,5 +1,6 @@
-import React, { useState, useCallback, useRef } from 'react';
-import { GoogleMap, useJsApiLoader, DrawingManager, Polygon } from '@react-google-maps/api';
+import React, {useState} from 'react';
+import {DrawingManager, GoogleMap, Polygon, useJsApiLoader} from '@react-google-maps/api';
+import PropTypes from "prop-types";
 
 const containerStyle = {
     width: '100%',
@@ -8,7 +9,7 @@ const containerStyle = {
 
 const center = {
     lat: 52.4128,
-    lng: -4.0780
+    lng: -4.078
 };
 
 const libraries = ['places', 'drawing'];
@@ -66,7 +67,7 @@ export default function DeliveryZoneMap({ onZoneChange }) {
                     options={{
                         drawingControl: true,
                         drawingControlOptions: {
-                            position: window.google.maps.ControlPosition.TOP_CENTER,
+                            position: globalThis.google.maps.ControlPosition.TOP_CENTER,
                             drawingModes: ['polygon'],
                         },
                         polygonOptions: {
@@ -91,7 +92,7 @@ export default function DeliveryZoneMap({ onZoneChange }) {
                         fillOpacity: 0.4,
                     }}
                     onClick={() => {
-                        if(window.confirm("Reset delivery zone?")) {
+                        if(globalThis.confirm("Reset delivery zone?")) {
                             setPath([]);
                             onZoneChange(null);
                         }
@@ -101,3 +102,7 @@ export default function DeliveryZoneMap({ onZoneChange }) {
         </GoogleMap>
     );
 }
+
+DeliveryZoneMap.propTypes = {
+    onZoneChange: PropTypes.func.isRequired,
+};

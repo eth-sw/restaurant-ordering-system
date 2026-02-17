@@ -7,12 +7,12 @@
  */
 export const geocodeAddress = (address) => {
     return new Promise((resolve, reject) => {
-        if (!window.google || !window.google.maps) {
+        if (!globalThis.google?.maps) {
             reject(new Error("Google Maps API not loaded yet."))
             return;
         }
 
-        const geocoder = new window.google.maps.Geocoder();
+        const geocoder = new globalThis.google.maps.Geocoder();
 
         geocoder.geocode({ address: address }, (results, status ) => {
             if (status === 'OK' && results[0]) {
@@ -22,7 +22,7 @@ export const geocodeAddress = (address) => {
                     lng: location.lng(),
                 });
             } else {
-                reject(new Error(`Geocoding failed: ${status}`));
+                reject(new Error("Address not found"));
             }
         });
     });

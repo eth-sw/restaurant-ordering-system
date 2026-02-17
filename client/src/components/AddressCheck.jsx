@@ -1,6 +1,7 @@
-import { useState } from "react";
-import { useJsApiLoader } from '@react-google-maps/api';
-import { geocodeAddress } from '../utils/geocoding';
+import {useState} from "react";
+import {useJsApiLoader} from '@react-google-maps/api';
+import {geocodeAddress} from '../utils/geocoding';
+import PropTypes from 'prop-types';
 import axios from 'axios';
 
 const libraries = ['places', 'drawing'];
@@ -79,3 +80,7 @@ export default function AddressCheck({ onAddressValidated }) {
         </div>
     );
 }
+
+AddressCheck.propTypes = {
+    onAddressValidated: PropTypes.func.isRequired
+};

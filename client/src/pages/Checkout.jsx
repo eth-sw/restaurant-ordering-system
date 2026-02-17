@@ -1,5 +1,5 @@
-import { useContext, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import {useContext, useState} from 'react';
+import {useNavigate} from 'react-router-dom';
 import BasketContext from "../context/BasketContext.jsx";
 import axios from 'axios';
 
@@ -52,7 +52,7 @@ const Checkout = () => {
 
             // Redirect to home
             setTimeout(() => {
-                window.location.href = '/';
+                globalThis.location.href = '/';
             }, 1500);
 
         } catch (err) {

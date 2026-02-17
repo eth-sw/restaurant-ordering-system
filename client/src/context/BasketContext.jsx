@@ -1,4 +1,5 @@
-import {createContext, useContext, useEffect, useState} from "react";
+import {createContext, useEffect, useMemo, useState} from "react";
+import PropTypes from 'prop-types';
 
 const BasketContext = createContext();
 
@@ -34,7 +35,7 @@ export const BasketProvider = ({ children }) => {
     const addToBasket = (item, restaurantId) => {
         // Check if basket already has items from a different restaurant
         if (basketItems.length > 0 && basketItems[0].restaurantId !== restaurantId) {
-            if (!window.confirm("Start a new basket?")) {
+            if (!globalThis.confirm("Start a new basket?")) {
                 return;
             }
             setBasketItems([]); // Clears old basket
@@ -82,22 +83,31 @@ export const BasketProvider = ({ children }) => {
      *
      * @returns {*} Total price
      */
-
     const getBasketTotal = () => {
         return basketItems.reduce((total, item) => total + item.price * item.qty, 0)
     };
 
+    /**
+     * Context value as memo.
+     * Prevents unnecessary re-rendering of components by only creating an object when basketItems changes
+     */
+    const contextValue = useMemo(() => ({
+        basketItems,
+        addToBasket,
+        removeFromBasket,
+        decreaseQuantity,
+        getBasketTotal,
+    }), [basketItems]);
+
     return (
-        <BasketContext.Provider value={{
-            basketItems,
-            addToBasket,
-            removeFromBasket,
-            decreaseQuantity,
-            getBasketTotal,
-        }}>
+        <BasketContext.Provider value={contextValue}>
             {children}
         </BasketContext.Provider>
     );
+};
+
+BasketProvider.propTypes = {
+    children: PropTypes.node.isRequired
 };
 
 export default BasketContext;
