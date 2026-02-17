@@ -68,7 +68,7 @@ export default function DeliveryZoneMap({ onZoneChange }) {
                         drawingControl: true,
                         drawingControlOptions: {
                             position: globalThis.google.maps.ControlPosition.TOP_CENTER,
-                            drawingModes: ['polygon'],
+                            drawingModes: ['polygon']
                         },
                         polygonOptions: {
                             fillColor: '#2196F3',
