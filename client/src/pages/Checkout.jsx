@@ -1,7 +1,13 @@
 import {useContext, useState} from 'react';
-import {useNavigate} from 'react-router-dom';
+import {useNavigate} from 'react-router-dom'
+import {loadStripe} from '@stripe/stripe-js';
+import {Elements} from '@stripe/react-stripe-js';
+import PaymentForm from "../components/PaymentForm";
 import BasketContext from "../context/BasketContext.jsx";
 import axios from 'axios';
+
+// Initialise Stripe outside component so that it doesn't reload on every render
+const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY);
 
 /**
  * Checkout Component/
@@ -15,14 +21,38 @@ const Checkout = () => {
     const navigate = useNavigate();
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState('');
+    const [clientSecret, setClientSecret] = useState('');
 
     const total = getBasketTotal();
+
+    // Initialise payment intent with backend
+    const initPayment = async () => {
+        const token = localStorage.getItem('token');
+        if (!token) return navigate('/login');
+
+        setLoading(true);
+        try {
+            const amountInPence = Math.round(total * 100);
+
+            const res = await axios.post('http://localhost:5000/api/payment/create-payment-intent',
+                { amount: amountInPence },
+                { headers: {'x-auth-token': token } }
+            );
+            // Switches UI to the payment form
+            setClientSecret(res.data.clientSecret);
+            setLoading(false);
+        } catch (err) {
+            console.error("Payment init failed", err);
+            setMessage("Failed to initialise payment");
+            setLoading(false);
+        }
+    };
 
     /**
      * Handles submitting order to the backend
      * Constructs the order payload and clears the basket if successful
      */
-    const handlePlaceOrder = async () => {
+    const handlePlaceOrder = async (paymentId) => {
         setLoading(true);
         try {
             const token = localStorage.getItem('token');
@@ -38,9 +68,11 @@ const Checkout = () => {
                     menuItem: item._id,
                     name: item.name,
                     price: item.price,
-                    qty: item.qty
+                    qty: item.qty,
                 })),
-                totalAmount: total
+                totalAmount: total,
+                paymentId: paymentId,
+                status: 'Accepted'
             };
 
             await axios.post('http://localhost:5000/api/orders', payload, {
@@ -84,6 +116,7 @@ const Checkout = () => {
             <h1>Checkout</h1>
 
             <div style={{ background: '#fff', border: '1px solid #ddd', borderRadius: '8px', padding: '20px' }}>
+                {/* List of Basket Items */}
                 {basketItems.map(item => (
                     <div key={item._id} style={{
                         display: 'flex',
@@ -128,24 +161,31 @@ const Checkout = () => {
 
                 {message && <p style={{ textAlign: 'right', color: 'blue' }}>{message}</p>}
 
-                <button
-                    onClick={handlePlaceOrder}
-                    disabled={loading}
-                    style={{
-                        width: '100%',
-                        marginTop: '20px',
-                        padding: '15px',
-                        background: '#2e7d32',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '5px',
-                        fontSize: '1.2em',
-                        cursor: 'pointer',
-                        opacity: loading ? 0.7 : 1
-                    }}
-                >
-                    {loading ? 'Processing Order' : 'Place Order'}
-                </button>
+                {/* UI logic switch, switches to payment form */}
+                {clientSecret ? (
+                    <Elements stripe={stripePromise} options={{ clientSecret }}>
+                        <PaymentForm onPaymentSuccess={handlePlaceOrder} />
+                    </Elements>
+                ) : (
+                    <button
+                        onClick={initPayment}
+                        disabled={loading}
+                        style={{
+                            width: '100%',
+                            marginTop: '20px',
+                            padding: '15px',
+                            background: '#2e7d32',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '5px',
+                            fontSize: '1.2em',
+                            cursor: 'pointer',
+                            opacity: loading ? 0.7 : 1
+                        }}
+                    >
+                        {loading ? 'Processing Order...' : 'Proceed to Payment'}
+                    </button>
+                )}
             </div>
         </div>
     );

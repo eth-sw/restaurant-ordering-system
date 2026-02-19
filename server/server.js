@@ -21,6 +21,7 @@ app.use('/api/restaurants', require('./routes/restaurants'));
 app.use('/api/menu', require('./routes/menu'));
 app.use('/api/geofence', require('./routes/geofence'));
 app.use('/api/orders', require('./routes/orders'));
+app.use('/api/payment', require('./routes/payment'));
 
 /**
  * Backend and Database Status Check
