@@ -1,13 +1,14 @@
 const jwt = require('jsonwebtoken');
 
 /**
- * Intercepts requests to private routes.
- * Verifies JWT token from header, attaches decoded user data to request object.
+ * Authentication Middleware.
+ * Intercepts requests to private routes, verifies JWT token from header,
+ * and attaches decoded user payload to the request object.
  *
  * @param req HTTP Request object
  * @param res HTTP Response object
  * @param next Callback function to pass control to next middleware in stack
- * @returns {*} 401 if auth fails, otherwise calls next() to proceed
+ * @returns {*} 401 JSON response if auth fails, otherwise proceeds
  *
  * @author Ethan Swain
  */
@@ -31,7 +32,7 @@ module.exports = function authMiddleware(req, res, next) {
         // Go to route handler
         next();
     } catch (err) {
-        console.error("Middleware Authorisation Error:", err.message)
+        console.error("Middleware Authorisation Error:", err.message);
         res.status(401).json({ message: 'Token is not valid' });
     }
 };
