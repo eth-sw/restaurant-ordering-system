@@ -5,10 +5,10 @@ import './Register.css';
 
 /**
  * Register Component.
- * Displays a sign-up form and handles user creation process via the API.
- * Redirects to Login page if successful.
+ * Provides a form for new customers to create an account.
+ * Handles backend registration payload and redirects to login if successful.
  *
- * @returns {React.JSX.Element} Registration form
+ * @returns {React.JSX.Element} Registration form UI
  *
  * @author Ethan Swain
  */

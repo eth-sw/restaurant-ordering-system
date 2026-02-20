@@ -5,10 +5,10 @@ import './Register.css';
 
 /**
  * Login Component.
- * Handles user authentication and stored returned JWT token.
- * Allows for persistence during a session.
+ * Provides a form for customers to login to their account.
+ * Refreshes if successful.
  *
- * @returns {React.JSX.Element} Login form
+ * @returns {React.JSX.Element} Login form UI
  *
  * @author Ethan Swain
  */
@@ -43,7 +43,9 @@ const Login = () => {
             localStorage.setItem('token', res.data.token);
 
             setMessage('Login Successful! Redirecting...');
-            setTimeout(() => navigate('/'), 1500);
+            setTimeout(() =>{
+                window.location.href = '/';
+            }, 1500);
         } catch (err) {
             setMessage('Error: ' + (err.response?.data?.message || 'Login Failed'));
         }

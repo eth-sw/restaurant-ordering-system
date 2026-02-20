@@ -14,13 +14,12 @@ const center = {
 
 const libraries = ['places', 'drawing'];
 
-
 /**
  * DeliveryZoneMap Component.
- * Map allowing Restaurant Owner to draw a polygon for their delivery area
+ * Map allowing an Admin or Supervisor to draw a polygon for the delivery area.
  *
- * @param onZoneChange Callback function to return array of coordinates
- * @returns {React.JSX.Element} Returns area that restaurant delivers to
+ * @param onZoneChange Callback function returning array of polygon coordinates
+ * @returns {React.JSX.Element} Google Map for geofencing
  *
  * @author Ethan Swain
  */

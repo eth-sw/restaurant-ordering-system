@@ -1,12 +1,13 @@
-import {useEffect, useState} from 'react';
+import {useContext, useEffect, useState} from 'react';
 import axios from 'axios';
 import {Link, useNavigate} from 'react-router-dom';
 import AddressCheck from '../components/AddressCheck';
+import BasketContext from "../context/BasketContext.jsx";
 
 /**
  * Home Component.
- * Fetches and displays User Profiles, Restaurant Details, and menu Items.
- * Handles the logic based on whether the user has created a restaurant or not
+ * Main page of the app.
+ * Displays the menu, handles geofence validation, and provides admin controls based on user's role.
  *
  * @returns {React.JSX.Element} Dashboard view
  *
@@ -15,208 +16,219 @@ import AddressCheck from '../components/AddressCheck';
 const Home = () => {
     // Auth state
     const [user, setUser] = useState(null);
-    const [restaurant, setRestaurant] = useState(null);
     const [menuItems, setMenuItems] = useState([]);
+    const [deliveryStatus, setDeliveryStatus] = useState(null);
+    const [eta, setEta] = useState('');
 
-    // Customer state
-    const [deliveryLocation, setDeliveryLocation] = useState(null);
-    const [availableRestaurants, setAvailableRestaurants] = useState([]);
-    const [isCheckingLocation, setIsCheckingLocation] = useState(true);
-
+    const { basketItems, addToBasket, getBasketTotal } = useContext(BasketContext);
     const navigate = useNavigate();
+
+    const isAdmin = user && (user.role === 'admin' || user.role === 'supervisor');
+    const isStaff = user && ['admin', 'supervisor', 'staff'].includes(user.role);
+    const isCustomer = user && user.role === 'customer';
 
     // Fetches the data
     useEffect(() => {
         const fetchData = async () => {
             // Get authentication token
             const token = localStorage.getItem('token');
-            if (!token) return;
-
-            try {
-                // Get user data
-                const userRes = await axios.get('http://localhost:5000/api/auth/me', {
-                    headers: { 'x-auth-token': token }
-                });
-                setUser(userRes.data);
-
-                // Check if user owns a restaurant
+            if (token) {
                 try {
-                    const restRes = await axios.get('http://localhost:5000/api/restaurants/mine', {
-                        headers: { 'x-auth-token': token }
+                    // Get user data
+                    const userRes = await axios.get('http://localhost:5000/api/auth/me', {
+                        headers: {'x-auth-token': token}
                     });
-
-                    if(restRes.data) {
-                        setRestaurant(restRes.data);
-
-                        // Get menu items (if the restaurant exists)
-                        const menuRes = await axios.get('http://localhost:5000/api/menu', {
-                            headers: {'x-auth-token': token}
-                        });
-                        setMenuItems(menuRes.data);
-                    }
-
+                    setUser(userRes.data);
                 } catch (err) {
-                    console.info("User is not a restaurant owner.", err.message);
+                    console.info("Authentication error", err);
                 }
-
+            }
+            try {
+                const menuRes = await axios.get('http://localhost:5000/api/menu');
+                setMenuItems(menuRes.data);
             } catch (err) {
-                console.error("Error fetching data", err);
-                // If token is invalid, remove it, force user to login again
-                localStorage.removeItem('token');
-                navigate('/login');
+                console.error("Menu fetch error", err);
             }
         };
-
         fetchData();
-    }, [navigate]);
-
-    const handleLogout = () => {
-        localStorage.removeItem('token'); // Remove token
-        setUser(null);
-        setRestaurant(null);
-        navigate('/login');
-    };
+    }, []);
 
     // Customer has entered a valid address inside a zone
-    const handleAddressValidated = (address, coords, restaurants) => {
-        setDeliveryLocation({ address, coords });
-        setAvailableRestaurants(restaurants);
-        setIsCheckingLocation(false);
-    };
-
-    const handleResetLocation = () => {
-        setDeliveryLocation(null);
-        setAvailableRestaurants([]);
-        setIsCheckingLocation(true);
-    };
-
-    if(!user) {
-        return (
-            <div style={{ padding: '40px', textAlign: 'center' }}>
-                <h1>Welcome to the Restaurant</h1>
-                <p>Please <Link to="/login">Login</Link> or <Link to="/register">Register</Link></p>
-            </div>
-        );
+    const handleAddressValidated = (address, coords, resultData) => {
+        if (resultData.availableRestaurants && resultData.availableRestaurants.length > 0) {
+            setDeliveryStatus('success');
+            setEta(resultData.eta || '40 mins');
+        } else if (resultData.canDeliver) {
+            setDeliveryStatus('success');
+            setEta(resultData.eta);
+        } else {
+            setDeliveryStatus('fail');
+        }
     }
+
+    const handleDelete = async (id) => {
+        if (!confirm("Delete this item?")) return;
+        try {
+            await axios.delete(`http://localhost:5000/api/menu/${id}`, {
+                headers: { 'x-auth-token': localStorage.getItem('token') }
+            });
+            setMenuItems(menuItems.filter(item => item._id !== id));
+        } catch(err) {
+            alert("Error deleting item");
+        }
+    };
     return (
-        <div style={{ padding: '40px', maxWidth: '1000px', margin: '0 auto'}} >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
-                <h2 style={{ margin: 0, color: '#1565c0' }}>Hello, {user.name}!</h2>
-                <button
-                    onClick={handleLogout}
-                    style={{ padding: '8px 16px', background: '#d32f2f', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
-                    Logout
-                </button>
-            </div>
+        <div style={{ padding: '20px', maxWidth: '1200px', margin: '0 auto' }}>
 
-            {/* Restaurant details */}
-            {restaurant ? (
-                <div style={{ border: '2px solid #4caf50', borderRadius: '10px', padding: '30px', background: 'white' }}>
-                    <h1 style={{ textAlign: 'center' }}>Restaurant Dashboard</h1>
-                    <h2 style={{ color: '#2e7d32', fontSize: '28px' }}>{restaurant.name}</h2>
-                    <p>Address: {restaurant.address} | Cuisine: {restaurant.cuisine}</p>
+            {/* Header Section */}
+            <header style={{
+                textAlign: 'center',
+                padding: '60px 20px',
+                background: '#e8f5e9',
+                borderRadius: '15px',
+                marginBottom: '40px'
+            }}>
+                <h1 style={{ fontSize: '3rem', color: '#2e7d32', marginBottom: '10px' }}>
+                    Welcome to Aber Pizza
+                </h1>
+                <p style={{ fontSize: '1.2rem', color: '#555' }}>
+                    Food delivered straight to your door.
+                </p>
 
-                    <div style={{ margin: '20px 0' }}>
-                        <Link to={`/restaurant/${restaurant._id}/orders`}>
-                            <button style={{
-                                padding: '12px 24px',
-                                fontSize: '1.1rem',
-                                background: '#2196F3',
-                                color: 'white',
-                                border: 'none',
-                                borderRadius: '5px',
-                                cursor: 'pointer',
-                                boxShadow: '0 2px 5px rgba(0,0,0,0.2)'
-                            }}>
-                                View Incoming Orders
-                            </button>
-                        </Link>
+                {user && <p>Welcome back, <strong>{user.name}</strong>!</p>}
+
+                {(!user || isCustomer) && (
+                    <div style={{ maxWidth: '500px', margin: '30px auto', background: 'white', padding: '20px', borderRadius: '10px', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}>
+                        <h3 style={{ marginTop: 0 }}>Check Delivery Availability</h3>
+                        <AddressCheck onAddressValidated={handleAddressValidated} />
+                        {deliveryStatus === 'success' && (
+                            <div style={{ marginTop: '15px', color: '#2e7d32', fontWeight: 'bold', padding: '10px', background: '#e8f5e9', borderRadius: '5px' }}>
+                                We deliver to you! <br/>
+                                <span style={{ fontSize: '0.9em' }}>Estimated Time: {eta}</span>
+                            </div>
+                        )}
+                        {deliveryStatus === 'fail' && (
+                            <div style={{ marginTop: '15px', color: '#c62828', fontWeight: 'bold', padding: '10px', background: '#ffebee', borderRadius: '5px' }}>
+                                We do not deliver to you.
+                            </div>
+                        )}
                     </div>
+                )}
+            </header>
 
-                    <div style={{ marginTop: '30px', borderTop: '1px solid #eee', paddingTop: '20px' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-                            <h3>Your Menu</h3>
-                            <Link to="/add-menu">
-                                <button style={{ background: '#4caf50', color: 'white', border: 'none', padding: '10px 15px', borderRadius: '5px', cursor: 'pointer' }}>
-                                    Add Item
+            {/* Menu Section */}
+            <section>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                    <h2 style={{ fontSize: '2rem', borderBottom: '3px solid #2e7d32', display: 'inline-block' }}>Our Menu</h2>
+
+                    <div style={{ display: 'flex', gap: '10px' }}>
+                        {/* Kitchen Dashboard Button (Staff/Admin) */}
+                        {isStaff && (
+                            <Link to="/kitchen">
+                                <button style={{ background: '#1976d2', color: 'white', padding: '10px 20px', border: 'none', borderRadius: '5px', cursor: 'pointer' }}>
+                                    Kitchen Orders
                                 </button>
                             </Link>
-                        </div>
+                        )}
 
-                        {/* Menu grid */}
-                        {menuItems.length > 0 ? (
-                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '15px' }}>
-                                {menuItems.map(item => (
-                                    <div key={item._id} style={{ border: '1px solid #ddd', borderRadius: '8px', padding: '15px', textAlign: 'left', background: '#fafafa' }}>
-                                        <h4 style={{ margin: '0 0 5px 0' }}>{item.name}</h4>
-                                        <p style={{ margin: '0', color: '#666', fontSize: '14px' }}>{item.category}</p>
-                                        <p style={{ fontSize: '12px', color: '#888' }}>{item.description}</p>
-                                        <p style={{ fontWeight: 'bold', color: '#2e7d32' }}>{item.price.toFixed(2)}</p>
-                                    </div>
-                                ))}
-                            </div>
-                        ) : (
-                            <p style={{ color: '#888' }}>No items on the menu yet</p>
+                        {/* Add Menu Item Button (Admin Only) */}
+                        {isAdmin && (
+                            <Link to="/add-menu">
+                                <button style={{ background: '#d32f2f', color: 'white', padding: '10px 20px', border: 'none', borderRadius: '5px', cursor: 'pointer' }}>
+                                    + Add Menu Item
+                                </button>
+                            </Link>
+                        )}
+
+                        {!user && (
+                            <Link to="/login" style={{ textDecoration: 'none', color: '#1976d2' }}>Log in to order &rarr;</Link>
                         )}
                     </div>
                 </div>
-            ) : (
-            // If user has no restaurant
-                <div>
-                    <h1 style={{ textAlign: 'center', marginBottom: '30px' }}>Find Food Near You</h1>
 
-                    {isCheckingLocation && (
-                        <div style={{ maxWidth: '600px', margin: '0 auto' }}>
-                            <AddressCheck onAddressValidated={handleAddressValidated} />
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '25px' }}>
+                    {menuItems.map(item => (
+                        <div key={item._id} style={{
+                            border: '1px solid #eee',
+                            borderRadius: '10px',
+                            padding: '0',
+                            overflow: 'hidden',
+                            boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
+                            background: 'white'
+                        }}>
+                            {/* Menu Image */}
+                            <img
+                                src={item.image || 'https://placehold.co/400x300?text=No+Image'}
+                                alt={item.name}
+                                style={{ width: '100%', height: '200px', objectFit: 'cover' }}
+                            />
+                            <div style={{ padding: '20px' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
+                                    <h3 style={{ margin: '0 0 10px 0', fontSize: '1.3rem' }}>{item.name}</h3>
+                                    <span style={{ background: '#e8f5e9', color: '#2e7d32', padding: '5px 10px', borderRadius: '15px', fontWeight: 'bold', fontSize: '0.9rem' }}>
+                                        £{item.price.toFixed(2)}
+                                    </span>
+                                </div>
+                                <p style={{ color: '#666', fontSize: '0.95rem', lineHeight: '1.5' }}>{item.description}</p>
+                                <p style={{ fontSize: '0.8rem', color: '#999', fontStyle: 'italic' }}>{item.category}</p>
 
-                            <div style={{ marginTop: '40px', textAlign: 'center', borderTop: '1px solid #eee', paddingTop: '20px' }}>
-                                <p style={{ color: '#666' }}>Are you a restaurant owner?</p>
-                                <Link to="/create-restaurant">
-                                    <button style={{ padding: '10px 20px', background: '#9e9e9e', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
-                                        Create Business Account
-                                    </button>
-                                </Link>
-                            </div>
-                        </div>
-                    )}
-
-                    {!isCheckingLocation && deliveryLocation && (
-                        <div>
-                            <div style={{
-                                background: '#f5f5f5', padding: '15px', borderRadius: '8px', marginBottom: '20px',
-                                display: 'flex', justifyContent: 'space-between', alignItems: 'center'
-                            }}>
-                                <span>Delivering to: <strong>{deliveryLocation.address}</strong></span>
-                                <button onClick={handleResetLocation} style={{ cursor: 'pointer', border: 'none', background: 'transparent', color: '#1976d2', textDecoration: 'underline' }}>
-                                    Change Location
+                                {/* Add to Basket Button */}
+                                <button
+                                    onClick={() => user ? addToBasket(item) : navigate('/login')}
+                                    disabled={!user}
+                                    style={{
+                                        width: '100%',
+                                        marginTop: '15px',
+                                        padding: '10px',
+                                        background: user ? '#2e7d32' : '#ccc',
+                                        color: 'white',
+                                        border: 'none',
+                                        borderRadius: '5px',
+                                        cursor: user ? 'pointer' : 'not-allowed'
+                                    }}>
+                                    {!isStaff && (
+                                        <button
+                                            onClick={() => user ? addToBasket(item) : navigate('/login')}
+                                            disabled={!user}
+                                            style={{
+                                                width: '100%',
+                                                marginTop: '15px',
+                                                padding: '10px',
+                                                background: user ? '#2e7d32' : '#ccc',
+                                                color: 'white',
+                                                border: 'none',
+                                                borderRadius: '5px',
+                                                cursor: user ? 'pointer' : 'not-allowed'
+                                            }}>
+                                            {user ? 'Add to Basket' : 'Login to Order'}
+                                        </button>
+                                    )}
                                 </button>
-                            </div>
 
-                            {availableRestaurants.length > 0 ? (
-                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '20px' }}>
-                                    {availableRestaurants.map(rest => (
-                                        <div key={rest._id} style={{ border: '1px solid #ddd', borderRadius: '8px', padding: '20px', background: 'white', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
-                                            <h3 style={{ margin: '0 0 10px 0' }}>{rest.name}</h3>
-                                            <span style={{ background: '#e3f2fd', color: '#1565c0', padding: '4px 8px', borderRadius: '4px', fontSize: '12px' }}>
-                                                {rest.cuisine}
-                                            </span>
-                                            <p style={{ color: '#666', fontSize: '14px', margin: '10px 0' }}>{rest.address}</p>
-                                            <Link to={`/menu/${rest._id}`}>
-                                                <button style={{ width: '100%', padding: '10px', background: '#4caf50', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
-                                                    View Menu
-                                                </button>
-                                            </Link>
-                                        </div>
-                                    ))}
-                                </div>
-                            ) : (
-                                <div style={{ textAlign: 'center', padding: '40px', color: '#666' }}>
-                                    <h3>No restaurants found here.</h3>
-                                    <p>Try a different address.</p>
-                                </div>
-                            )}
+                                {isAdmin && (
+                                    <div style={{ display: 'flex', gap: '5px', marginTop: '10px' }}>
+                                        <Link to={`/edit-menu/${item._id}`} style={{ flex: 1 }}>
+                                            <button style={{ width: '100%', background: '#1976d2', color: 'white', border: 'none', padding: '5px', borderRadius: '5px', cursor: 'pointer' }}>Edit</button>
+                                        </Link>
+                                        <button onClick={() => handleDelete(item._id)} style={{ flex: 1, background: '#d32f2f', color: 'white', border: 'none', padding: '5px', borderRadius: '5px', cursor: 'pointer' }}>Delete</button>
+                                    </div>
+                                )}
+                            </div>
                         </div>
-                    )}
+                    ))}
+                </div>
+            </section>
+
+            {isCustomer && basketItems.length > 0 && (
+                <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, background: '#2e7d32', color: 'white', padding: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', boxShadow: '0 -4px 10px rgba(0,0,0,0.2)' }}>
+                    <span style={{ fontSize: '1.2rem', fontWeight: 'bold' }}>
+                        {basketItems.reduce((acc, i) => acc + i.qty, 0)} items in basket | Total: £{getBasketTotal().toFixed(2)}
+                    </span>
+                    <Link to="/checkout">
+                        <button style={{ background: 'white', color: '#2e7d32', padding: '10px 20px', border: 'none', borderRadius: '5px', fontWeight: 'bold', cursor: 'pointer' }}>
+                            View Checkout &rarr;
+                        </button>
+                    </Link>
                 </div>
             )}
         </div>
