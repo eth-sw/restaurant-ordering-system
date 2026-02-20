@@ -1,16 +1,11 @@
 const mongoose = require('mongoose');
 
 /**
- * Menu Item Schema Blueprint
+ * Menu Item Schema Blueprint.
  *
  * @author Ethan Swain
  */
 const MenuItemSchema = new mongoose.Schema({
-    restaurant: {
-        type: mongoose.Schema.Types.ObjectId, // Connects to specific Restaurant model
-        ref: 'Restaurant',
-        required: true
-    },
     name: {
         type: String,
         required: true
@@ -26,6 +21,10 @@ const MenuItemSchema = new mongoose.Schema({
         type: String,
         enum: ['Pizza', 'Burger', 'Drink', 'Side', 'Dessert'],
         default: 'Pizza'
+    },
+    image: {
+        type: String,
+        default: 'https://placehold.co/400x300?text=No+Image'
     },
     isAvailable: {
         type: Boolean,
