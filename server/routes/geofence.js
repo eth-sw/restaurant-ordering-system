@@ -4,24 +4,30 @@ const Restaurant = require("../models/Restaurant");
 const axios = require('axios');
 
 /**
- * Check if a user's location is within a restaurant's delivery zone
- * and calculates the ETA.
+ * POST: Check if a user's location is within the restaurant delivery zone.
+ * Calculates ETA using Google Mps API.
  *
- * @param req HTTP request object (body contains lat, lng, and restaurantId)
+ * @param req HTTP request object (body contains lat and lng)
  * @param res HTTP Response object
- * @returns {*} JSON object containing delivery availability, list of restaurants, and ETA
  *
- * @auhor Ethan Swain
+ * @author Ethan Swain
  */
 router.post('/check-availability', async(req, res) => {
-    const { restaurantId, latitude, longitude } = req.body;
+    const { latitude, longitude } = req.body;
 
     if (!latitude || !longitude) {
         return res.status(400).json({ message: "Missing location data" });
     }
 
     try {
-        let query = {
+        const restaurant = await Restaurant.findOne();
+
+        if (!restaurant) {
+            return res.status(404).json({ message: "No restaurant config found"})
+        }
+
+        const isInside = await Restaurant.findOne({
+            _id: restaurant._id,
             deliveryZone: {
                 $geoIntersects: {
                     $geometry: {
@@ -30,32 +36,21 @@ router.post('/check-availability', async(req, res) => {
                     }
                 }
             }
-        };
+        })
 
-        if (restaurantId) {
-            query._id = restaurantId;
-        }
-
-        const restaurants = await Restaurant.find(query);
-
-        if (restaurants.length > 0) {
+        if (isInside) {
             // ETA Calculation Logic
             let eta = "30-45 mins"; // Default if API fails
 
             try {
-                // Use first available restaurant to calculate distance
-                const restaurant = restaurants[0];
-
                 // Check restaurant has valid location set
                 if (restaurant.location && restaurant.location.coordinates) {
-                    // MogoDB is [Longitude, Latitude]
-                    // Google Maps API is "Latitude,Longitude"
                     const originLat = restaurant.location.coordinates[1];
                     const originLng = restaurant.location.coordinates[0];
+                    const apiKey = process.env.GOOGLE_MAPS_API_KEY;
 
                     const origin = `${originLat},${originLng}`;
                     const destination = `${latitude},${longitude}`;
-                    const apiKey = process.env.GOOGLE_MAPS_API_KEY;
 
                     // Calls Google Distance Matrix API
                     const matrixRes = await axios.get(`https://maps.googleapis.com/maps/api/distancematrix/json?origins=${origin}&destinations=${destination}&mode=driving&key=${apiKey}`);
@@ -63,10 +58,10 @@ router.post('/check-availability', async(req, res) => {
                     // Parse response
                     if (matrixRes.data.rows[0].elements[0].status === 'OK') {
                         const travelSeconds = matrixRes.data.rows[0].elements[0].duration.value;
-                        const prepTimeSeconds = 20 * 60;
+                        const prepTime = 20 * 60;
 
                         // Calculate total minutes
-                        const totalMinutes = Math.ceil((travelSeconds + prepTimeSeconds) / 60);
+                        const totalMinutes = Math.ceil((travelSeconds + prepTime) / 60);
                         eta = `${totalMinutes} mins`;
                     }
                 }
@@ -76,14 +71,12 @@ router.post('/check-availability', async(req, res) => {
 
             return res.json({
                 canDeliver: true,
-                availableRestaurants: restaurants,
                 eta: eta,
                 message: "You are in the delivery zone."
             });
         } else {
             return res.json({
                 canDeliver: false,
-                availableRestaurants: [],
                 message: "You are outside the delivery zone."
             });
         }

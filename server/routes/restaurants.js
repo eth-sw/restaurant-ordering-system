@@ -1,84 +1,47 @@
 const express = require('express');
 const router = express.Router();
-const auth = require('../middleware/auth');
 const Restaurant = require('../models/Restaurant');
+const auth = require('../middleware/auth');
 
 /**
- * Create a new restaurant
- * Links the new restaurant to the logged-in user
- *
- * @param req HTTP Request object (body contains name, address, cuisine)
- * @param res HTTP Response object
- * @returns {*} Restaurant object just created
- *
- * @author Ethan Swain
- */
-router.post('/', auth, async (req, res) => {
-    const { name, address, cuisine, deliveryZone } = req.body;
-
-    try {
-        // Check if user already has a restaurant
-        let restaurant = await Restaurant.findOne({ owner: req.user.id });
-        if (restaurant) {
-            return res.status(400).json({ message: 'You already have a restaurant' });
-        }
-
-        // Create the new restaurant linked to the user
-        restaurant = new Restaurant({
-            owner: req.user.id,
-            name,
-            address,
-            cuisine,
-            deliveryZone
-        });
-
-        await restaurant.save();
-        res.json(restaurant);
-
-    } catch (err) {
-        console.error(err.message);
-        res.status(500).send('Server Error');
-    }
-});
-
-/**
- * Get the logged-in user's restaurant by ID
- *
- * @param req HTTP Request object
- * @param res HTTP Response object
- * @returns {*} User's restaurant object or 404 if not found
- */
-router.get('/mine', auth, async (req, res) => {
-    try {
-        const restaurant = await Restaurant.findOne({ owner: req.user.id });
-
-        if (!restaurant) {
-            return res.status(404).json({ message: 'No restaurant found for this user' });
-        }
-
-        res.json(restaurant);
-    } catch (err) {
-        console.error(err.message);
-        res.status(500).send('Server Error');
-    }
-});
-
-/**
- * Get all restaurants
+ * GET: Retrieve restaurant config.
  * Used for debugging or displaying a full list without location filtering
  *
  * @param req HTTP Request object
  * @param res HTTP Response object
- * @returns {*} JSON array of all restaurants
  */
 router.get('/', async (req, res) => {
     try {
-        const restaurants = await Restaurant.find();
-        res.json(restaurants);
+        const restaurant = await Restaurant.findOne();
+        if (!restaurant) {
+            return res.status(404).json({ message: "No restaurant config found"});
+        }
+        res.json(restaurant);
     } catch (err) {
         console.error(err.message);
         res.status(500).send('Server Error');
     }
-})
+});
+
+/**
+ * PUT: Update delivery zone.
+ * Modifies the geofence polygon.
+ * Only accessible by admins and supervisors.
+ */
+router.put('/zone', auth, roleCheck(['admin', 'supervisor']), async (req, res) => {
+    try {
+        const restaurant = await Restaurant.findOne();
+        if (!restaurant) {
+            return res.status(404).json({ message: "Restaurant config not found" });
+        }
+
+        restaurant.deliveryZone = req.body.deliveryZone;
+        await restaurant.save();
+        res.json(restaurant);
+    } catch (err) {
+        console.error("Zone Update Error: ", err);
+        res.status(500).json({ message: "Server Error", error: err.message });
+    }
+});
 
 module.exports = router;

@@ -5,17 +5,17 @@ const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
 const auth = require('../middleware/auth');
 
 /**
- * Create a payment intent.
- * Validates the payment with Stripe.
+ * POST: Create a Stripe payment intent.
+ * Initialises a secure transation with Stripe.
  *
- * @param req HTTP Request object
- * @param res HTTP Response object
+ * @param req HTTP Request object (body contains amount in pence)
+ * @param res HTTP Response object (contains client secret)
  *
  * @author Ethan Swain
  */
 router.post('/create-payment-intent', auth, async (req, res) => {
     try{
-        const { amount } = req.body; // Amount in pence
+        const { amount } = req.body;
 
         // Create PaymentIntent with the order amount and currency
         const paymentIntent = await stripe.paymentIntents.create({
@@ -27,7 +27,7 @@ router.post('/create-payment-intent', auth, async (req, res) => {
         });
 
         res.send({
-            clientSecret: paymentIntent.client_secret,
+            clientSecret: paymentIntent.client_secret
         });
     } catch (err) {
         console.error(err);

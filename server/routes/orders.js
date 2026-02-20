@@ -2,30 +2,40 @@ const express = require('express');
 const router = express.Router();
 const auth = require('../middleware/auth');
 const Order = require('../models/Order');
+const Restaurant = require('../models/Restaurant');
+const roleCheck = require("../middleware/roleCheck");
 
 /**
- * Create a new order.
- * Validates basket items and saves the order to the database linked to the user.
+ * POST: Create a new order.
+ * Validates basket items, retrieves restaurant config, and saves order to the
+ * DB linked to the customer.
  *
- * @param req HTTP Request object (body contains restaurantId, items, totalAmount)
+ * @param req HTTP Request object (body contains items, totalAmount, paymentId)
  * @param res HTTP Response object
- * @returns {*} Created order object
+ * @returns {Object} JSON object of created order
  *
  * @author Ethan Swain
  */
 router.post('/', auth, async (req, res) => {
-    const { restaurantId, items, totalAmount } = req.body;
+    const { items, totalAmount, paymentId } = req.body;
 
     try {
         if (!items || items.length === 0) {
             return res.status(400).json({ message: "No items in order" });
         }
 
+        const restaurant = await Restaurant.findOne();
+        if (!restaurant) {
+            return res.status(500).json({ message: "Restaurant config missing" });
+        }
+
         const newOrder = new Order({
             user: req.user.id,
-            restaurant: restaurantId,
+            restaurant: restaurant._id,
             items,
-            totalAmount
+            totalAmount,
+            paymentId: paymentId || null,
+            status: paymentId ? 'Accepted' : 'Pending'
         });
 
         const order = await newOrder.save();
@@ -38,12 +48,12 @@ router.post('/', auth, async (req, res) => {
 });
 
 /**
- * Get all orders for the logged in user.
+ * GET: Get order history for the logged in customer.
  * Returns history of orders sorted by newest first.
  *
  * @param req HTTP Request object
  * @param res HTTP Response object
- * @returns {*} JSON array of orders
+ * @returns {Array} JSON array of order objects belonging to user
  */
 router.get('/', auth, async (req, res) => {
     try {
@@ -56,27 +66,16 @@ router.get('/', auth, async (req, res) => {
 });
 
 /**
- * Get all orders for a specific restaurant.
- * Used by restaurant owner to view incoming orders
+ * GET: Get all orders for the restaurant.
+ * Only for Staff, Supervisor, or Admin.
  *
- * @param req HTTP Request object (params contain restaurantId)
+ * @param req HTTP Request object
  * @param res HTTP Response object
- * @returns {*} JSON array of orders for that restaurant
+ * @returns {Array} JSON array of all orders for that user
  */
-router.get('/restaurant/:restaurantId', auth, async (req, res) => {
+router.get('/all', auth, roleCheck(['staff', 'supervisor', 'admin']), async (req, res) => {
     try {
-        const Restaurant = require('../models/Restaurant')
-        const restaurant = await Restaurant.findById(req.params.restaurantId);
-
-        if (!restaurant) {
-            return res.status(404).json({ message:'Restaurant not found' });
-        }
-
-        if (restaurant.owner.toString() !== req.user.id) {
-            return res.status(401).json({ message: 'Not authorised' });
-        }
-
-        const orders = await Order.find({ restaurant: req.params.restaurantId })
+        const orders = await Order.find()
             .populate('user', ['name', 'email'])
             .sort({ createdAt: -1 });
         res.json(orders);
@@ -87,13 +86,14 @@ router.get('/restaurant/:restaurantId', auth, async (req, res) => {
 });
 
 /**
- * Update status of an order
+ * PATCH: Update status of an order.
+ *
  *
  * @param req HTTP Request object (body contains status)
  * @param res HTTP Response object
- * @returns {*} Updated order object
+ * @returns {Object} JSON object of updated order
  */
-router.patch('/:id/status', auth, async (req, res) => {
+router.patch('/:id/status', auth, roleCheck(['staff', 'supervisor', 'admin']), async (req, res) => {
     const { status } = req.body;
 
     try {
