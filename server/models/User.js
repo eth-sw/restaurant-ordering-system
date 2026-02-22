@@ -1,7 +1,9 @@
 const mongoose = require('mongoose');
 
 /**
- * User Schema Blueprint
+ * User Schema Blueprint.
+ * Defines structure for auth and role management
+ * Contains enum roles to enforce role-based access control.
  *
  * @author Ethan Swain
  */
@@ -25,7 +27,7 @@ const UserSchema = new mongoose.Schema({
     },
     role: {
         type: String,
-        enum: ['customer', 'admin', 'restaurant'],
+        enum: ['customer', 'staff', 'supervisor', 'admin'],
         default: 'customer'
     },
     createdAt: {
@@ -34,6 +36,4 @@ const UserSchema = new mongoose.Schema({
     }
 });
 
-const User = mongoose.model('User', UserSchema);
-
-module.exports = User;
+module.exports = mongoose.model('User', UserSchema);

@@ -3,7 +3,7 @@ import axios from 'axios';
 import {useNavigate} from 'react-router-dom';
 
 /**
- * Helper function for colour of order status
+ * Helper function for colour of order status.
  *
  * @param status Status of the order
  * @returns {string} Hex colour code linked to status
@@ -18,9 +18,9 @@ const getStatusColor = (status) => {
 };
 
 /**
- * OrderHistory Component
- * Displays a list of past orders for the logged in customer
- * ALlows users to track the status of their order
+ * OrderHistory Component.
+ * Displays a list of past orders for the logged in customer.
+ * ALlows users to track the status of their order.
  *
  * @returns {React.JSX.Element} List of orders
  *

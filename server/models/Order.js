@@ -1,9 +1,9 @@
 const mongoose = require('mongoose');
 
 /**
- * Order Schema.
+ * Order Schema Blueprint.
  * Defines the structure of an Order stored in MongoDB.
- * Links to User and Restaurant models
+ * Links to User who placed order and Restaurant config.
  *
  * @author Ethan Swain
  */
@@ -32,6 +32,9 @@ const OrderSchema = new mongoose.Schema({
     totalAmount: {
         type: Number,
         required: true
+    },
+    paymentId: {
+        type: String
     },
     status: {
         type: String,

@@ -5,6 +5,9 @@ import {PaymentElement, useElements, useStripe} from "@stripe/react-stripe-js";
  * PaymentForm Component.
  * Allows the user to pay using Stripe.
  *
+ * @param onPaymentSuccess Callback function for when payment succeeds, passing payment intent id
+ * @returns {React.JSX.Element} Stripe payment form
+ *
  * @author Ethan Swain
  */
 export default function PaymentForm({ onPaymentSuccess }) {
@@ -37,7 +40,7 @@ export default function PaymentForm({ onPaymentSuccess }) {
             // Places order in DB if successful
             onPaymentSuccess(paymentIntent.id);
         } else {
-            setMessage("Unexpected state")
+            setMessage("Unexpected state");
             setIsProcessing(false);
         }
     };
@@ -50,7 +53,7 @@ export default function PaymentForm({ onPaymentSuccess }) {
                 disabled={isProcessing || !stripe || !elements}
                 id="submit"
                 style={{
-                    width: '100%', margin: '20px', padding: '15px',
+                    width: '100%', margin: '20px 0', padding: '15px',
                     background: '#2e7d32', color: 'white', border: 'none', borderRadius: '5px',
                     cursor: isProcessing ? 'not-allowed' : 'pointer'
                 }}

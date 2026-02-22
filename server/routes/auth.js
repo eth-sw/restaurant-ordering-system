@@ -1,17 +1,17 @@
 const express = require('express');
 const router = express.Router();
-const bcrypt = require('bcryptjs'); // Password hashing library
-const jwt = require('jsonwebtoken'); // Session token generator library
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const auth = require('../middleware/auth');
 
 /**
- * Register a new user
- * Validates input, encrypts password and saves user to database
+ * POST: Register a new customer.
+ * Validates input, hashes the password, and saves user to database.
+ * Admins and Staff must be created manually.
  *
  * @param req HTTP Request object (body containing name, email, password)
  * @param res HTTP Response object
- * @returns {*} 201 if successful, 400 if user exists, 500 for server error
  *
  * @author Ethan Swain
  */
@@ -40,7 +40,6 @@ router.post('/register', async (req, res) => {
         await user.save();
 
         res.status(201).json({ message: 'User successfully registered'});
-
     } catch (err) {
         console.error(err.message);
         res.status(500).send('Server Error');
@@ -48,12 +47,11 @@ router.post('/register', async (req, res) => {
 });
 
 /**
- * Authenticate user and get token
- * Checks credentials and signs the JWT
+ * POST: Authenticate user and get token.
+ * Checks credentials and returns a signed JWT containing user ID and role.
  *
  * @param req HTTP Request object (body containing email, password)
  * @param res HTTP Response object
- * @returns {*} JSON object containing JWT token
  */
 router.post('/login', async (req, res) => {
     const { email, password } = req.body;
@@ -95,12 +93,8 @@ router.post('/login', async (req, res) => {
 });
 
 /**
- * Retrieve all users
- * Used for testing/debugging
- *
- * @param req HTTP Request object
- * @param res HTTP Response object
- * @returns {*} JSON array of all user objects (without passwords)
+ * GET: Retrieve all users.
+ * Used for testing/debugging to view system users without passwords.
  */
 router.get('/all-users', async (req, res) => {
     try {
@@ -113,12 +107,8 @@ router.get('/all-users', async (req, res) => {
 });
 
 /**
- * Get current user's profile
- * Uses ID from decoded JWT to get users details
- *
- * @param req HTTP Request object (requires the token)
- * @param res HTTP Response object
- * @returns {*} JSON object of logged-in user
+ * GET: Retrieve current user's profile.
+ * Decodes JWT and gets full user object from the DB.
  */
 router.get('/me', auth, async (req, res) => {
     try {

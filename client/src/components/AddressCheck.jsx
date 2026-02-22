@@ -8,11 +8,11 @@ const libraries = ['places', 'drawing'];
 
 /**
  * AddressCheck Component.
- * Allows a customer to enter an address, geocode it, and check if it's with
- * a restaurant's delivery zone.
+ * Allows a customer to enter an address, converts it to coordinates,
+ * queries backend to check if it's within restaurant delivery zone.
  *
  * @param onAddressValidated Callback function for when restaurants are found
- * @returns {React.JSX.Element} Restaurants in the delivery zone
+ * @returns {React.JSX.Element} Form interface for address input
  *
  * @author Ethan Swain
  */
@@ -28,27 +28,30 @@ export default function AddressCheck({ onAddressValidated }) {
         libraries: libraries
     });
 
+    /**
+     * Handles form submission, geocodes the address, and checks API availability.
+     */
     const handleCheck = async (e) => {
         e.preventDefault();
         setError('');
         setLoading(true);
 
         try {
-            // Get lat/lng from Google
+            // Get lat/lng from Google Geocoding
             const coords = await geocodeAddress(address);
 
-            // Get restaurants who deliver to these coordinates
+            // Check if restaurant delivers to these coordinates
             const res = await axios.post('http://localhost:5000/api/geofence/check-availability', {
                 latitude: coords.lat,
                 longitude: coords.lng
             });
 
-            // Handles result
+            // Handle backend geofence result
             if (res.data.canDeliver) {
-                // Sends data back to Home.jsx
-                onAddressValidated(address, coords, res.data.availableRestaurants);
+                // Sends data payload back to parent (Home.jsx)
+                onAddressValidated(address, coords, res.data);
             } else {
-                setError("Sorry, no restaurants deliver to this location.");
+                setError("Sorry, we do not deliver to this location.");
             }
         } catch (err) {
             console.error("ERROR:", err);
@@ -62,7 +65,6 @@ export default function AddressCheck({ onAddressValidated }) {
 
     return (
         <div className="address-check-container" style={{ padding: '20px', border: '1px solid #ddd', borderRadius: '8px' }}>
-            <h3>Check Delivery Availability</h3>
             <form onSubmit={handleCheck}>
                 <input
                     type="text"
@@ -73,7 +75,7 @@ export default function AddressCheck({ onAddressValidated }) {
                     required
                 />
                 <button type="submit" disabled={loading} style={{ padding: '10px 20px', cursor: 'pointer' }}>
-                    {loading ? 'Checking...' : 'Find Food'}
+                    {loading ? 'Checking...' : 'Check Availability'}
                 </button>
             </form>
             {error && <p style={{ color: 'red', marginTop: '10px', fontWeight: 'bold' }}>{error}</p>}

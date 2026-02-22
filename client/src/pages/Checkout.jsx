@@ -10,14 +10,15 @@ import axios from 'axios';
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY);
 
 /**
- * Checkout Component/
- * Displays current basket items, total price, and allows user to place the order.
+ * Checkout Component.
+ * Displays current basket items, total price, and allows user to place orders.
  *
  * @returns {React.JSX.Element} Checkout page UI
- * @constructor
+ *
+ * @author Ethan Swain
  */
 const Checkout = () => {
-    const { basketItems, addToBasket, decreaseQuantity, removeFromBasket, getBasketTotal } = useContext(BasketContext);
+    const { basketItems, addToBasket, decreaseQuantity, removeFromBasket, getBasketTotal, clearBasket } = useContext(BasketContext);
     const navigate = useNavigate();
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState('');
@@ -49,8 +50,8 @@ const Checkout = () => {
     };
 
     /**
-     * Handles submitting order to the backend
-     * Constructs the order payload and clears the basket if successful
+     * Handles submitting order to the backend.
+     * Constructs the order payload and clears the basket if successful.
      */
     const handlePlaceOrder = async (paymentId) => {
         setLoading(true);
@@ -63,7 +64,6 @@ const Checkout = () => {
 
             // Construct payload matching backend order schema
             const payload = {
-                restaurantId: basketItems[0].restaurantId,
                 items: basketItems.map(item => ({
                     menuItem: item._id,
                     name: item.name,
@@ -80,7 +80,8 @@ const Checkout = () => {
             });
 
             setMessage("Order Placed Successfully");
-            localStorage.removeItem('food_basket');
+
+            clearBasket();
 
             // Redirect to home
             setTimeout(() => {
@@ -100,7 +101,7 @@ const Checkout = () => {
             <div style={{ textAlign: 'center', padding: '50px'}}>
                 <h2>Your basket is empty</h2>
                 <button onClick={() => navigate('/')} style={{ marginTop: '20px', padding: '10px 20px', cursor: 'pointer'}}>
-                    Find Restaurants
+                    Back to Menu
                 </button>
             </div>
         );
@@ -139,7 +140,7 @@ const Checkout = () => {
                             <span style={{ fontWeight: 'bold' }}>{item.qty}</span>
 
                             <button
-                                onClick={() => addToBasket(item, item.restaurantId)}
+                                onClick={() => addToBasket(item)}
                                 style={{ width: '30px', height: '30px', borderRadius: '50%', border: '1px solid #ccc', cursor: 'pointer' }}
                             >+</button>
 

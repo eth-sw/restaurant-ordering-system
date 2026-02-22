@@ -5,7 +5,7 @@ import './Register.css';
 
 /**
  * AddMenu Component.
- * Allows restaurant owner to add items to their menu.
+ * Allows admins and supervisors to add items to their menu.
  *
  * @returns {React.JSX.Element} Add Menu Item form
  *
@@ -129,6 +129,17 @@ const AddMenu = () => {
                         <option value="Side">Side</option>
                         <option value="Dessert">Dessert</option>
                     </select>
+                </div>
+
+                <div className="form-group">
+                    <label htmlFor="image">Image URL</label>
+                    <input
+                        id="image"
+                        type="text"
+                        name="image"
+                        value={image}
+                        onChange={onChange}
+                        placeholder="https://..." />
                 </div>
 
                 <button type="submit" className="btn-primary" style={{ marginTop: '20px' }}>Add to Menu</button>
