@@ -17,6 +17,7 @@ const Register = () => {
     const [formData, setFormData] = useState({
         name: '',
         email: '',
+        phone: '',
         password: ''
     });
 
@@ -26,7 +27,7 @@ const Register = () => {
     // Hook to redirect user after registering successfully
     const navigate = useNavigate();
 
-    const { name, email, password } = formData;
+    const { name, email, phone, password } = formData;
 
     // Update state dynamically as user types
     const onChange = (e) => {
@@ -52,14 +53,14 @@ const Register = () => {
             <div className="register-card">
                 <h2>Create Account</h2>
 
-                    {message && (
-                        <div className="message-box" style={{
-                            backgroundColor: message.includes('Error') ? '#ffebee' : '#e8f5e9',
-                            color: message.includes('Error') ? '#c62828' : '#2e7d32'
-                        }}>
-                            {message}
-                        </div>
-                    )}
+                {message && (
+                    <div className="message-box" style={{
+                        backgroundColor: message.includes('Error') ? '#ffebee' : '#e8f5e9',
+                        color: message.includes('Error') ? '#c62828' : '#2e7d32'
+                    }}>
+                        {message}
+                    </div>
+                )}
 
                 <form onSubmit={onSubmit}>
                     <div className="form-group">
@@ -84,6 +85,19 @@ const Register = () => {
                             value={email}
                             onChange={onChange}
                             placeholder="johnsmith@email.com"
+                            required
+                        />
+                    </div>
+
+                    <div className="form-group">
+                        <label htmlFor="phone">Phone Number (Include +44)</label>
+                        <input
+                            id="phone"
+                            type="tel"
+                            name="phone"
+                            value={phone}
+                            onChange={onChange}
+                            placeholder="+447123456789"
                             required
                         />
                     </div>

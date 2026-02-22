@@ -1,0 +1,48 @@
+@startuml
+left to right direction
+actor "Staff" as St
+actor "Supervisor" as Su
+actor "Admin" as A
+
+' Inheritances
+Su --|> St
+A --|> Su
+
+rectangle "Web-Based Restaurant Ordering System" {
+    
+  ' ----- STAFF -----
+    usecase "View Kitchen Orders Dashboard" as UC1
+    usecase "Update Order Status" as UC2
+    usecase "Logout" as UC3
+    
+  ' ----- SUPERVISOR -----
+    usecase "Manage Menu Items" as UC4
+    usecase "View Sales Reports" as UC5
+    usecase "Process Refunds via Stripe" as UC6
+    usecase "Open/Close the Restaurant" as UC7
+    
+  ' ----- ADMIN -----
+    usecase "Update Delivery Geofence" as UC8
+    usecase "User Management" as UC9
+    usecase "Update Business Settings" as UC10
+	  usecase "Manage API Integrations" as UC11
+    usecase "View System Logs" as UC12
+}
+
+' Relationships
+St --> UC1
+St --> UC2
+St --> UC3
+
+Su --> UC4
+Su --> UC5
+Su --> UC6
+Su --> UC7
+
+A --> UC8
+A --> UC9
+A --> UC10
+A --> UC11
+A --> UC12
+
+@enduml

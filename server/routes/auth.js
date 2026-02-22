@@ -16,7 +16,7 @@ const auth = require('../middleware/auth');
  * @author Ethan Swain
  */
 router.post('/register', async (req, res) => {
-    const { name, email, password } = req.body;
+    const { name, email, phone, password } = req.body;
 
     try {
         // Check if user already exists from email
@@ -29,6 +29,7 @@ router.post('/register', async (req, res) => {
         user = new User({
             name,
             email,
+            phone,
             password
         });
 

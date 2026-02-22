@@ -1,0 +1,40 @@
+@startuml
+left to right direction
+actor "Guest" as G
+actor "Customer" as C
+
+' Inheritances
+C --|> G
+
+rectangle "Web-Based Restaurant Ordering System" {
+  
+  ' ----- GUEST -----
+    usecase "Register" as UC1
+    usecase "Login" as UC2
+    usecase "View Menu" as UC3
+    usecase "Check Delivery Availability" as UC4
+    usecase "Add Items to Basket" as UC5
+    usecase "Checkout and Pay via Stripe" as UC6
+
+
+    
+  ' ----- CUSTOMER -----
+    usecase "Edit Account" as UC7
+    usecase "View Personal Order History" as UC8
+    usecase "Logout" as UC9
+    
+}
+
+' Relationships
+G --> UC1
+G --> UC2
+G --> UC3
+G --> UC4
+G --> UC5
+G --> UC6
+
+C --> UC7
+C --> UC8
+C --> UC9
+
+@enduml
