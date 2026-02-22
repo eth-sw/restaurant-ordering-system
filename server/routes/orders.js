@@ -4,6 +4,7 @@ const auth = require('../middleware/auth');
 const Order = require('../models/Order');
 const Restaurant = require('../models/Restaurant');
 const roleCheck = require("../middleware/roleCheck");
+const { sendOrderUpdateSMS } = require('../utils/sms');
 
 /**
  * POST: Create a new order.
@@ -88,7 +89,6 @@ router.get('/all', auth, roleCheck(['staff', 'supervisor', 'admin']), async (req
 /**
  * PATCH: Update status of an order.
  *
- *
  * @param req HTTP Request object (body contains status)
  * @param res HTTP Response object
  * @returns {Object} JSON object of updated order
@@ -97,13 +97,17 @@ router.patch('/:id/status', auth, roleCheck(['staff', 'supervisor', 'admin']), a
     const { status } = req.body;
 
     try {
-        let order = await Order.findById(req.params.id);
+        let order = await Order.findById(req.params.id).populate('user', ['name', 'phone']);
         if (!order) {
             return res.status(404).json({ message:'Order not found' });
         }
 
         order.status = status;
         await order.save();
+
+        if (order.user && order.user.phone) {
+            await sendOrderUpdateSMS(order.user.phone, status, order._id);
+        }
 
         res.json(order);
     } catch (err) {
