@@ -71,7 +71,16 @@ const RestaurantOrders = () => {
                     <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #eee', paddingBottom: '10px', marginBottom: '10px' }}>
                         <div>
                             <h3 style={{ margin: 0 }}>Order #{order._id.slice(-4)}</h3>
-                            <small>Customer: {order.user ? order.user.name : "Unknown"} | Total: £{order.totalAmount?.toFixed(2)}</small>
+                            <small>
+                                Customer: {order.customerInfo?.name || order.user?.name || "Unknown"} |
+                                Total: £{order.totalAmount?.toFixed(2)}
+                            </small>
+                            {order.customerInfo && (
+                                <div style={{ fontSize: '0.85em', color: '#555', marginTop: '5px' }}>
+                                    {order.customerInfo.address} <br/>
+                                    {order.customerInfo.phone}
+                                </div>
+                            )}
                         </div>
                         <strong style={{ color: order.status === 'Delivered' ? 'green' : '#1976d2', fontSize: '1.2em' }}>{order.status}</strong>
                     </div>
