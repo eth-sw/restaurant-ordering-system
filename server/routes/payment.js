@@ -2,18 +2,18 @@ const express = require('express');
 const router = express.Router();
 const Stripe = require('stripe');
 const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
-const auth = require('../middleware/auth');
+const optionalAuth = require('../middleware/optionalAuth');
 
 /**
  * POST: Create a Stripe payment intent.
- * Initialises a secure transation with Stripe.
+ * Initialises a secure transation with Stripe. Uses optionalAuth for guests.
  *
  * @param req HTTP Request object (body contains amount in pence)
  * @param res HTTP Response object (contains client secret)
  *
  * @author Ethan Swain
  */
-router.post('/create-payment-intent', auth, async (req, res) => {
+router.post('/create-payment-intent', optionalAuth, async (req, res) => {
     try{
         const { amount } = req.body;
 

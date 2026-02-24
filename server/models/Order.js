@@ -11,7 +11,13 @@ const OrderSchema = new mongoose.Schema({
     user: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
-        required: true
+        required: false
+    },
+    // Customer delivery details, required for users and guests
+    customerInfo: {
+        name: { type: String, required: true },
+        phone: { type: String, required: true },
+        address: { type: String, required: true }
     },
     restaurant: {
         type: mongoose.Schema.Types.ObjectId,
@@ -34,7 +40,7 @@ const OrderSchema = new mongoose.Schema({
         required: true
     },
     paymentId: {
-        type: String
+        type: String // Links to Stripe payment intent
     },
     status: {
         type: String,

@@ -7,7 +7,8 @@ import BasketContext from "../context/BasketContext.jsx";
 /**
  * Home Component.
  * Main page of the app.
- * Displays the menu, handles geofence validation, and provides admin controls based on user's role.
+ * Allows users and guests to view menu, add items to basket, and check delivery availability.
+ * Displays admin buttons based on role.
  *
  * @returns {React.JSX.Element} Dashboard view
  *
@@ -173,37 +174,22 @@ const Home = () => {
                                 <p style={{ fontSize: '0.8rem', color: '#999', fontStyle: 'italic' }}>{item.category}</p>
 
                                 {/* Add to Basket Button */}
-                                <button
-                                    onClick={() => user ? addToBasket(item) : navigate('/login')}
-                                    disabled={!user}
-                                    style={{
-                                        width: '100%',
-                                        marginTop: '15px',
-                                        padding: '10px',
-                                        background: user ? '#2e7d32' : '#ccc',
-                                        color: 'white',
-                                        border: 'none',
-                                        borderRadius: '5px',
-                                        cursor: user ? 'pointer' : 'not-allowed'
-                                    }}>
-                                    {!isStaff && (
-                                        <button
-                                            onClick={() => user ? addToBasket(item) : navigate('/login')}
-                                            disabled={!user}
-                                            style={{
-                                                width: '100%',
-                                                marginTop: '15px',
-                                                padding: '10px',
-                                                background: user ? '#2e7d32' : '#ccc',
-                                                color: 'white',
-                                                border: 'none',
-                                                borderRadius: '5px',
-                                                cursor: user ? 'pointer' : 'not-allowed'
-                                            }}>
-                                            {user ? 'Add to Basket' : 'Login to Order'}
-                                        </button>
-                                    )}
-                                </button>
+                                {!isStaff && (
+                                    <button
+                                        onClick={() => addToBasket(item)}
+                                        style={{
+                                            width: '100%',
+                                            marginTop: '15px',
+                                            padding: '10px',
+                                            background: '#2e7d32',
+                                            color: 'white',
+                                            border: 'none',
+                                            borderRadius: '5px',
+                                            cursor: 'pointer'
+                                        }}>
+                                        Add to Basket
+                                    </button>
+                                )}
 
                                 {isAdmin && (
                                     <div style={{ display: 'flex', gap: '5px', marginTop: '10px' }}>
@@ -219,7 +205,7 @@ const Home = () => {
                 </div>
             </section>
 
-            {isCustomer && basketItems.length > 0 && (
+            {(!user || isCustomer) && basketItems.length > 0 && (
                 <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, background: '#2e7d32', color: 'white', padding: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', boxShadow: '0 -4px 10px rgba(0,0,0,0.2)' }}>
                     <span style={{ fontSize: '1.2rem', fontWeight: 'bold' }}>
                         {basketItems.reduce((acc, i) => acc + i.qty, 0)} items in basket | Total: £{getBasketTotal().toFixed(2)}

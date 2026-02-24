@@ -145,11 +145,8 @@ function App() {
                         <Route path="/" element={<Home />} />
                         <Route path="/register" element={<Register />} />
                         <Route path="/login" element={<Login />} />
+                        <Route path="/checkout" element={<Checkout />} />
 
-                        {/* Customer routes */}
-                        <Route path="/checkout" element={
-                            <ProtectedRoute allowedRoles={['customer']}><Checkout /></ProtectedRoute>
-                        } />
                         <Route path="/orders" element={
                             <ProtectedRoute allowedRoles={['customer']}><OrderHistory /></ProtectedRoute>
                         } />

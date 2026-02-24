@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const auth = require('../middleware/auth');
+const optionalAuth = require('../middleware/optionalAuth');
 const Order = require('../models/Order');
 const Restaurant = require('../models/Restaurant');
 const roleCheck = require("../middleware/roleCheck");
@@ -10,6 +11,7 @@ const { sendOrderUpdateSMS } = require('../utils/sms');
  * POST: Create a new order.
  * Validates basket items, retrieves restaurant config, and saves order to the
  * DB linked to the customer.
+ * Uses optionalAuth for registered users and guest checkouts.
  *
  * @param req HTTP Request object (body contains items, totalAmount, paymentId)
  * @param res HTTP Response object
@@ -17,12 +19,17 @@ const { sendOrderUpdateSMS } = require('../utils/sms');
  *
  * @author Ethan Swain
  */
-router.post('/', auth, async (req, res) => {
-    const { items, totalAmount, paymentId } = req.body;
+router.post('/', optionalAuth, async (req, res) => {
+    const { items, totalAmount, paymentId, customerInfo } = req.body;
 
     try {
         if (!items || items.length === 0) {
             return res.status(400).json({ message: "No items in order" });
+        }
+
+        // Confirms customer delivery info is present
+        if (!customerInfo || !customerInfo.address || !customerInfo.phone || !customerInfo.name) {
+            return res.status(400).json({ message: "Missing delivery information"})
         }
 
         const restaurant = await Restaurant.findOne();
@@ -31,7 +38,8 @@ router.post('/', auth, async (req, res) => {
         }
 
         const newOrder = new Order({
-            user: req.user.id,
+            user: req.user ? req.user.id : null, // Set user ID if logged in, otherwise null
+            customerInfo,
             restaurant: restaurant._id,
             items,
             totalAmount,
@@ -68,7 +76,7 @@ router.get('/', auth, async (req, res) => {
 
 /**
  * GET: Get all orders for the restaurant.
- * Only for Staff, Supervisor, or Admin.
+ * Protected route: Only for Staff, Supervisor, or Admin.
  *
  * @param req HTTP Request object
  * @param res HTTP Response object
@@ -88,6 +96,7 @@ router.get('/all', auth, roleCheck(['staff', 'supervisor', 'admin']), async (req
 
 /**
  * PATCH: Update status of an order.
+ * Protected route: Only for staff, supervisor, or admin.
  *
  * @param req HTTP Request object (body contains status)
  * @param res HTTP Response object
@@ -105,8 +114,11 @@ router.patch('/:id/status', auth, roleCheck(['staff', 'supervisor', 'admin']), a
         order.status = status;
         await order.save();
 
-        if (order.user && order.user.phone) {
-            await sendOrderUpdateSMS(order.user.phone, status, order._id);
+        // Check for guest phone number first, otherwise use user account phone number
+        const phoneToSend = order.customerInfo?.phone || (order.user && order.user.phone);
+
+        if (phoneToSend) {
+            await sendOrderUpdateSMS(phoneToSend, status, order._id);
         }
 
         res.json(order);
