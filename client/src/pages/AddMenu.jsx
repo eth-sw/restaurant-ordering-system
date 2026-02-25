@@ -1,6 +1,6 @@
 import {useState} from 'react';
-import axios from 'axios';
 import {useNavigate} from 'react-router-dom';
+import axios from 'axios';
 import './Register.css';
 
 /**
@@ -19,10 +19,10 @@ const AddMenu = () => {
         price: '',
         category: 'Pizza'
     });
-
+    const [file, setFile] = useState(null);
     // State to handle success/error messages
     const [message, setMessage] = useState('');
-
+    const [loading, setLoading] = useState(false);
     // Hook to navigate user after creating restaurant successfully
     const navigate = useNavigate();
 
@@ -33,31 +33,51 @@ const AddMenu = () => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
     };
 
+    const onFileChange = e => setFile(e.target.files[0]);
+
     // Handles form submission
     const onSubmit = async (e) => {
         e.preventDefault(); // Prevents default HTML form reload
-
-        // Retrieve token
-        const token = localStorage.getItem('token');
+        setLoading(true);
+        setMessage('');
 
         try {
-            await axios.post('http://localhost:5000/api/menu', formData, {
+            const token = localStorage.getItem('token');
+            let imageUrl = '';
+
+            if (file) {
+                const uploadData = new FormData();
+                uploadData.append('image', file);
+
+                const uploadRes = await axios.post('http://localhost:5000/api/upload', uploadData, {
+                    headers: {
+                        'Content-Type': 'multipart/form-data',
+                        'x-auth-token': token
+                    }
+                });
+
+                imageUrl = uploadRes.data.imageUrl;
+            }
+
+            const payload = {
+                name,
+                price: Number(price),
+                description,
+                category,
+                image: imageUrl
+            };
+
+            await axios.post('http://localhost:5000/api/menu', payload, {
                 headers: { 'x-auth-token': token }
             });
 
-            setMessage('Item Added Successfully.');
-
-            // Clears form but keeps the category so extra item can be easily added
-            setFormData({
-                    ...formData,
-                    name: '',
-                    description: '',
-                    price: ''
-            });
-
-            setTimeout(() => setMessage(''), 1500);
+            setMessage('Menu item added successfully');
+            setTimeout(() => navigate('/'), 1500);
         } catch (err) {
-            setMessage('Error: ' + (err.response?.data?.message || 'Cannot add item'));
+            console.error(err);
+            setMessage('Error: Could not add menu item');
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -132,14 +152,15 @@ const AddMenu = () => {
                 </div>
 
                 <div className="form-group">
-                    <label htmlFor="image">Image URL</label>
+                    <label htmlFor="image">Upload New Image (Optional)</label>
                     <input
                         id="image"
-                        type="text"
+                        type="file"
                         name="image"
-                        value={image}
-                        onChange={onChange}
-                        placeholder="https://..." />
+                        accept="image/*"
+                        onChange={onFileChange}
+                        style={{ padding: '10px', border: '1px solid #ddd', borderRadius: '5px' }}
+                        />
                 </div>
 
                 <button type="submit" className="btn-primary" style={{ marginTop: '20px' }}>Add to Menu</button>

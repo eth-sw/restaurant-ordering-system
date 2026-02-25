@@ -1,6 +1,7 @@
 import {useEffect, useState} from 'react';
+import {useNavigate, useParams} from 'react-router-dom';
 import axios from 'axios';
-import {useParams} from 'react-router-dom';
+import './Register.css';
 
 /**
  * EditMenu component.
@@ -12,60 +13,193 @@ import {useParams} from 'react-router-dom';
  */
 const EditMenu = () => {
     const { id } = useParams();
-    const [formData, setFormData] = useState({ name: '', price: '', description: '', category: 'Pizza', image: '' });
+    const navigate = useNavigate();
+
+    const [formData, setFormData] = useState({
+        name: '',
+        description: '',
+        price: '',
+        category: 'Pizza',
+        image: ''
+    });
+    const [file, setFile] = useState(null);
+
+    const [message, setMessage] = useState('');
+    const [loading, setLoading] = useState(false);
+
+    const { name, description, price, category, image } = formData;
 
     useEffect(() => {
-        axios.get('http://localhost:5000/api/menu')
-            .then(res => {
-                const item = res.data.find(i => i._id === id);
-                if (item) setFormData({
-                    name: item.name,
-                    price: item.price,
-                    description: item.description,
-                    category: item.category,
-                    image: item.image || ''
-                });
-            })
-            .catch(err => console.error(err));
+        const fetchItem = async () => {
+            try {
+                const res = await axios.get('http://localhost:5000/api/menu');
+                const itemToEdit = res.data.find(item => item._id === id);
+
+                if (itemToEdit) {
+                    setFormData({
+                        name: itemToEdit.name,
+                        description: itemToEdit.description,
+                        price: itemToEdit.price,
+                        category: itemToEdit.category,
+                        image: itemToEdit.image || ''
+                    });
+                } else {
+                    setMessage('Error: Item not found');
+                }
+            } catch (err) {
+                console.error("Error fetching item", err);
+                setMessage('Error: Could not load item data');
+            }
+        };
+        fetchItem();
     }, [id]);
+
+    const onChange = (e) => {
+        setFormData({ ...formData, [e.target.name]: e.target.value });
+    };
+
+    const onFileChange = e => setFile(e.target.files[0]);
 
     // Handles form submission
     const onSubmit = async (e) => {
         e.preventDefault();
-        const token = localStorage.getItem('token');
+        setLoading(true);
+        setMessage('');
+
         try {
-            await axios.put(`http://localhost:5000/api/menu/${id}`, formData, {
+            const token = localStorage.getItem('token');
+            let finalImageUrl = image;
+
+            if (file) {
+                const uploadData = new FormData();
+                uploadData.append('image', file);
+
+                const uploadRes = await axios.post('http://localhost:5000/api/upload', uploadData, {
+                    headers: {
+                        'Content-Type': 'multipart/form-data',
+                        'x-auth-token': token
+                    }
+                });
+
+                finalImageUrl = uploadRes.data.imageUrl;
+            }
+
+            const payload = {
+                name,
+                price: Number(price),
+                description,
+                category,
+                image: finalImageUrl
+            };
+
+            await axios.put(`http://localhost:5000/api/menu/${id}`, payload, {
                 headers: { 'x-auth-token': token }
             });
-            alert("Item Updated!");
 
-            globalThis.location.href = '/';
+            setMessage('Menu item updated successfully');
+            setTimeout(() => navigate('/'), 1500);
         } catch (err) {
-            alert("Error updating item");
+            console.error(err);
+            setMessage('Error: Could not update menu item');
+        } finally {
+            setLoading(false);
         }
     };
 
-    const onChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
-
     return (
-        <div style={{ padding: '20px', maxWidth: '600px', margin: '0 auto' }}>
-            <h1>Edit Item</h1>
-            <form onSubmit={onSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-                <input name="name" value={formData.name} onChange={onChange} placeholder="Name" style={{ padding: '10px' }} />
-                <input name="price" value={formData.price} onChange={onChange} type="number" step="0.01" style={{ padding: '10px' }} />
-                <textarea name="description" value={formData.description} onChange={onChange} style={{ padding: '10px' }} />
-                <select name="category" value={formData.category} onChange={onChange} style={{ padding: '10px' }}>
-                    <option value="Pizza">Pizza</option>
-                    <option value="Burger">Burger</option>
-                    <option value="Side">Side</option>
-                    <option value="Drink">Drink</option>
-                    <option value="Dessert">Dessert</option>
-                </select>
-                <input name="image" value={formData.image} onChange={onChange} placeholder="Image URL" style={{ padding: '10px'}} />
+        <div className="register-container">
+            <div className="register-card">
+            <h2>Edit Menu Item</h2>
 
-                <button type="submit" style={{ padding: '10px', background: '#2e7d32', color: 'white', border: 'none', cursor: 'pointer' }}>Update Item</button>
-                <button type="button" onClick={() => globalThis.location.href = '/'} style={{ padding: '10px', background: '#ccc', border: 'none', cursor: 'pointer' }}>Cancel</button>
+            {message && (
+                <div className="message-box" style={{
+                    backgroundColor: message.includes('Error') ? '#ffebee' : '#e8f5e9',
+                    color: message.includes('Error') ? '#c62828' : '#2e7d32'
+                }}>
+                    {message}
+                </div>
+            )}
+
+            <form onSubmit={onSubmit}>
+                <div className="form-group">
+                    <label htmlFor="name">Item Name</label>
+                    <input
+                        id="name"
+                        type="text"
+                        name="name"
+                        value={name}
+                        onChange={onChange}
+                        required
+                    />
+                </div>
+
+                <div className="form-group">
+                    <label htmlFor="description">Description</label>
+                    <textarea
+                        id="description"
+                        name="description"
+                        value={description}
+                        onChange={onChange}
+                        style={{ width: '100%', padding: '10px', borderRadius: '5px', border: '1px solid #ddd' }}
+                    />
+                </div>
+
+                <div className="form-group">
+                    <label htmlFor="price">Price (£)</label>
+                    <input
+                        id="price"
+                        type="number"
+                        name="price"
+                        value={price}
+                        onChange={onChange}
+                        step="0.01"
+                        required
+                    />
+                </div>
+
+                <div className="form-group">
+                    <label htmlFor="category">Category</label>
+                    <select
+                        id="category"
+                        name="category"
+                        value={category}
+                        onChange={onChange}
+                        style={{ width: '100%', padding: '12px', borderRadius: '5px', border: '1px solid #ddd' }}>
+                        <option value="Pizza">Pizza</option>
+                        <option value="Burger">Burger</option>
+                        <option value="Drink">Drink</option>
+                        <option value="Side">Side</option>
+                        <option value="Dessert">Dessert</option>
+                    </select>
+                </div>
+
+                <div className="form-group">
+                    <label htmlFor="image">Upload New Image (Optional)</label>
+                    {image && !file && <p style={{ fontSize: '0.85em', color: '#666', marginTop: 0, marginBottom: '5px' }}>Uploading a new file will replace it.</p>}
+
+                    <input
+                        id="image"
+                        type="file"
+                        name="image"
+                        accept="image/*"
+                        onChange={onFileChange}
+                        style={{ padding: '10px', border: '1px solid #ddd', borderRadius: '5px', backgroundColor: 'white' }}
+                        />
+                </div>
+
+                <button type="submit" disabled={loading} className="btn-primary" style={{ marginTop: '20px' }}>
+                        {loading ? 'Saving...' : 'Update Menu Item'}
+                </button>
+
+                <button
+                    type="button"
+                    onClick={() => navigate('/')}
+                    style={{ marginTop: '10px', width: '100%', padding: '10px', background: '#ccc', border: 'none', borderRadius: '5px', cursor: 'pointer', fontWeight: 'bold' }}
+                >
+                    Cancel & Back
+                </button>
             </form>
+            </div>
         </div>
     );
 };
