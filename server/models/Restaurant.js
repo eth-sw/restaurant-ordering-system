@@ -26,7 +26,11 @@ const RestaurantSchema = new mongoose.Schema({
         coordinates: {
             type: [[[Number]]],
         }
-    }
+    },
+    isOpen: {
+        type: Boolean,
+        default: true
+    },
 });
 
 module.exports = mongoose.model('Restaurant', RestaurantSchema);

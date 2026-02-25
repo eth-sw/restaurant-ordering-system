@@ -21,6 +21,8 @@ const Home = () => {
     const [deliveryStatus, setDeliveryStatus] = useState(null);
     const [eta, setEta] = useState('');
 
+    const [isStoreOpen, setIsStoreOpen] = useState(true);
+
     const { basketItems, addToBasket, getBasketTotal } = useContext(BasketContext);
     const navigate = useNavigate();
 
@@ -47,12 +49,31 @@ const Home = () => {
             try {
                 const menuRes = await axios.get('http://localhost:5000/api/menu');
                 setMenuItems(menuRes.data);
+
+                const restRes = await axios.get('http://localhost:5000/api/restaurants');
+                const restaurantConfig = Array.isArray(restRes.data) ? restRes.data[0] : restRes.data;
+                if (restaurantConfig && restaurantConfig.isOpen !== undefined) {
+                    setIsStoreOpen(restaurantConfig.isOpen);
+                }
             } catch (err) {
                 console.error("Menu fetch error", err);
             }
         };
         fetchData();
     }, []);
+
+    const toggleStoreStatus = async () => {
+        try {
+            const token = localStorage.getItem('token');
+            const res = await axios.patch('http://localhost:5000/api/restaurants/status', {}, {
+                headers: { 'x-auth-token': token }
+            });
+            setIsStoreOpen(res.data.isOpen);
+            alert(res.data.message);
+        } catch (err) {
+            alert("Error updating store status");
+        }
+    };
 
     // Customer has entered a valid address inside a zone
     const handleAddressValidated = (address, coords, resultData) => {
@@ -97,6 +118,19 @@ const Home = () => {
                 </p>
 
                 {user && <p>Welcome back, <strong>{user.name}</strong>!</p>}
+
+                {/* Store status */}
+                {isAdmin && (
+                    <button onClick={toggleStoreStatus} style={{ margin: '15px 0', padding: '10px 20px', background: isStoreOpen ? '#d32f2f' : '#2e7d32', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', fontWeight: 'bold' }}>
+                        {isStoreOpen ? 'Close Restaurant' : 'Open Restaurant'}
+                    </button>
+                )}
+
+                {!isStoreOpen && (
+                    <div style={{ background: '#c62828', color: 'white', padding: '15px', borderRadius: '8px', maxWidth: '500px', margin: '20px auto', fontWeight: 'bold', fontSize: '1.2rem' }}>
+                        We are currently closed.
+                    </div>
+                )}
 
                 {(!user || isCustomer) && (
                     <div style={{ maxWidth: '500px', margin: '30px auto', background: 'white', padding: '20px', borderRadius: '10px', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}>
@@ -159,7 +193,7 @@ const Home = () => {
                         }}>
                             {/* Menu Image */}
                             <img
-                                src={item.image || 'https://placehold.co/400x300?text=No+Image'}
+                                src={item.image ? (item.image.startsWith('/uploads') ? `http://localhost:5000${item.image}` : item.image) : 'https://placehold.co/400x300?text=No+Image'}
                                 alt={item.name}
                                 style={{ width: '100%', height: '200px', objectFit: 'cover' }}
                             />
@@ -177,17 +211,18 @@ const Home = () => {
                                 {!isStaff && (
                                     <button
                                         onClick={() => addToBasket(item)}
+                                        disabled={!isStoreOpen}
                                         style={{
                                             width: '100%',
                                             marginTop: '15px',
                                             padding: '10px',
-                                            background: '#2e7d32',
+                                            background: isStoreOpen ? '#2e7d32' : '#9e9e9e',
                                             color: 'white',
                                             border: 'none',
                                             borderRadius: '5px',
-                                            cursor: 'pointer'
+                                            cursor: isStoreOpen ? 'pointer' : 'not-allowed'
                                         }}>
-                                        Add to Basket
+                                        {isStoreOpen ? 'Add to Basket' : 'Store Closed'}
                                     </button>
                                 )}
 

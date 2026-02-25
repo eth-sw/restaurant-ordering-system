@@ -45,4 +45,23 @@ router.put('/zone', auth, roleCheck(['admin', 'supervisor']), async (req, res) =
     }
 });
 
+router.patch('/status', auth, roleCheck(['admin', 'supervisor']), async (req, res) => {
+    try {
+        const restaurant = await Restaurant.findOne();
+        if (!restaurant) {
+            return res.status(404).json({message: "Restaurant config not found"});
+        }
+
+        restaurant.isOpen = !restaurant.isOpen;
+        await restaurant.save();
+
+        res.json({
+            isOpen: restaurant.isOpen,
+            message: restaurant.isOpen ? "Restaurant is OPEN" : "Restaurant is CLOSED" });
+    } catch (err) {
+        console.error("Status Update Error: ", err);
+        res.status(500).json({ message: "Server Error" });
+    }
+})
+
 module.exports = router;
