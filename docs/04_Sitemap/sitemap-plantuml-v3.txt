@@ -1,0 +1,37 @@
+@startmindmap
+* A Web-Based Restaurant Ordering System
+
+' RIGHT SIDE (Customers
+** Guests (Public)
+*** Home Page (/)\n(Home/View Menu and Check Delivery)
+*** Checkout (/checkout)\n(View Basket and Stripe Payment)
+*** Login (/login)\n(User Login)
+*** Register (/register)\n(Customer Account Creation)
+
+** Customer (Protected)
+*** Home Page (/)\n(Home/View Menu and Check Delivery)
+*** Checkout (/checkout)\n(View Basket and Stripe Payment)
+*** Order History (/orders)\n(View Personal Order History)
+*** Profile (/profile)\n(Edit Account Details)
+*** Logout (/logout)\n(Ends User Session)
+
+' LEFT SIDE (Management
+left side
+
+** Staff (Protected)
+*** Kitchen (/kitchen)\n(View Active Orders, Update Order Status)
+
+** Supervisor (Protected)
+*** Add Menu Item (/add-menu)\n(Form to Add New Menu Items)
+*** Edit/Delete Menu Items (/edit-menu/:id)\n(Form to Modify or Delete Items)
+*** Sales (/reports/sales)\n(View Revenue and Popular Items)
+*** Refunds (/orders/refunds)\n(Process Order Cancellations)
+*** Store Status (/store-status)\n(Manually Open/Close the Restaurant)
+
+** Admin (Protected)
+*** Delivery Zone (/delivery-zone)\n(Draw/Update Google Maps Geofence)
+*** User Management (/admin/users)\n(Create Accounts, Reset Passwords)
+*** Settings (/admin/settings)\n(Update Delivery Fees, Business Address)
+*** Integrations (/admin/integrations)\n(Manage Stripe, Maps, Twilio Keys)
+*** Logs (/admin/logs)\n(View System Error Logs and Audit Trails)
+@endmindmap
