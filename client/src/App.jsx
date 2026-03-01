@@ -12,6 +12,8 @@ import RestaurantOrders from "./pages/RestaurantOrders";
 import OrderHistory from "./pages/OrderHistory";
 import SetDeliveryZone from './pages/SetDeliveryZone';
 import EditMenu from './pages/EditMenu';
+import AdminUsers from './pages/AdminUsers';
+import AdminSettings from './pages/AdminSettings';
 
 /**
  * Protected Route Wrapper Component.
@@ -102,9 +104,17 @@ function App() {
                                 </Link>
                             )}
                             {isAdmin && (
-                                <Link to="/delivery-zone" style={{ marginRight: '15px', color: '#1976d2' }}>
-                                    Delivery Zone
-                                </Link>
+                                <>
+                                    <Link to="/delivery-zone" style={{ marginRight: '15px', color: '#1976d2' }}>
+                                        Delivery Zone
+                                    </Link>
+                                    <Link to="/admin/users" style={{ marginRight: '15px', color: '#6a1b9a', fontWeight: 'bold' }}>
+                                        Manage Users
+                                    </Link>
+                                    <Link to="/admin/settings" style={{ marginRight: '15px', color: '#e65100', fontWeight: 'bold' }}>
+                                        Settings
+                                    </Link>
+                                </>
                             )}
                         </div>
 
@@ -163,6 +173,12 @@ function App() {
                         } />
                         <Route path="/edit-menu/:id" element={
                             <ProtectedRoute allowedRoles={['supervisor', 'admin']}><EditMenu /></ProtectedRoute>
+                        } />
+                        <Route path="/admin/users" element={
+                            <ProtectedRoute allowedRoles={['admin']}><AdminUsers /></ProtectedRoute>
+                        } />
+                        <Route path="/admin/settings" element={
+                            <ProtectedRoute allowedRoles={['supervisor', 'admin']}><AdminSettings /></ProtectedRoute>
                         } />
                     </Routes>
                 </div>

@@ -25,6 +25,7 @@ app.use('/api/geofence', require('./routes/geofence'));
 app.use('/api/orders', require('./routes/orders'));
 app.use('/api/payment', require('./routes/payment'));
 app.use('/api/upload', require('./routes/upload'));
+app.use('/api/users', require('./routes/users'));
 
 /**
  * Backend and Database Status Check
