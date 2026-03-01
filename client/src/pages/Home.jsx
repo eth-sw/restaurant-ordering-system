@@ -23,6 +23,8 @@ const Home = () => {
 
     const [isStoreOpen, setIsStoreOpen] = useState(true);
 
+    const [restaurantName, setRestaurantName] = useState('Our Restaurant');
+
     const { basketItems, addToBasket, getBasketTotal } = useContext(BasketContext);
     const navigate = useNavigate();
 
@@ -52,8 +54,13 @@ const Home = () => {
 
                 const restRes = await axios.get('http://localhost:5000/api/restaurants');
                 const restaurantConfig = Array.isArray(restRes.data) ? restRes.data[0] : restRes.data;
-                if (restaurantConfig && restaurantConfig.isOpen !== undefined) {
-                    setIsStoreOpen(restaurantConfig.isOpen);
+                if (restaurantConfig) {
+                    if (restaurantConfig.isOpen !== undefined) {
+                        setIsStoreOpen(restaurantConfig.isOpen);
+                    }
+                    if (restaurantConfig.name) {
+                        setRestaurantName(restaurantConfig.name);
+                    }
                 }
             } catch (err) {
                 console.error("Menu fetch error", err);
@@ -111,7 +118,7 @@ const Home = () => {
                 marginBottom: '40px'
             }}>
                 <h1 style={{ fontSize: '3rem', color: '#2e7d32', marginBottom: '10px' }}>
-                    Welcome to Aber Pizza
+                    Welcome to {restaurantName}
                 </h1>
                 <p style={{ fontSize: '1.2rem', color: '#555' }}>
                     Food delivered straight to your door.

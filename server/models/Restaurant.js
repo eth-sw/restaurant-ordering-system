@@ -17,6 +17,18 @@ const RestaurantSchema = new mongoose.Schema({
     cuisine: {
         type: String
     },
+    phone: {
+        type: String,
+        default: '01234 567890'
+    },
+    email: {
+        type: String,
+        default: 'contact@aberpizza.wales'
+    },
+    deliveryFee: {
+        type: Number,
+        default: 2.50
+    },
     deliveryZone: {
         type: {
             type: String,
@@ -31,6 +43,10 @@ const RestaurantSchema = new mongoose.Schema({
         type: Boolean,
         default: true
     },
+    updatedAt: {
+        type: Date,
+        default: Date.now
+    }
 });
 
 module.exports = mongoose.model('Restaurant', RestaurantSchema);

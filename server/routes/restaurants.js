@@ -64,4 +64,34 @@ router.patch('/status', auth, roleCheck(['admin', 'supervisor']), async (req, re
     }
 })
 
+/**
+ * PUT: Update General Restaurant Settings.
+ * Protected route: Only admins and supervisors can update these details
+ */
+router.put('/', auth, roleCheck(['admin', 'supervisor']), async (req, res) => {
+    const { name, address, phone, email, deliveryFee, cuisine } = req.body;
+
+    try {
+        let restaurant = await Restaurant.findOne();
+
+        if (!restaurant) {
+            restaurant = new Restaurant({ name, address, phone, email, deliveryFee, cuisine });
+        } else {
+            if (name) restaurant.name = name;
+            if (address) restaurant.address = address;
+            if (phone) restaurant.phone = phone;
+            if (email) restaurant.email = email;
+            if (deliveryFee !== undefined) restaurant.deliveryFee = deliveryFee;
+            if (cuisine) restaurant.cuisine = cuisine;
+            restaurant.updatedAt = Date.now();
+        }
+
+        await restaurant.save();
+        res.json(restaurant);
+    } catch (err) {
+        console.error("Error updating restaurant settings: ", err);
+        res.status(500).json({ message: "Server Error" });
+    }
+});
+
 module.exports = router;
