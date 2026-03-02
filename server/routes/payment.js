@@ -14,8 +14,8 @@ const optionalAuth = require('../middleware/optionalAuth');
  * @author Ethan Swain
  */
 router.post('/create-payment-intent', optionalAuth, async (req, res) => {
-    try{
-        const { amount } = req.body;
+    try {
+        const {amount} = req.body;
 
         // Create PaymentIntent with the order amount and currency
         const paymentIntent = await stripe.paymentIntents.create({
@@ -31,7 +31,7 @@ router.post('/create-payment-intent', optionalAuth, async (req, res) => {
         });
     } catch (err) {
         console.error(err);
-        res.status(500).json({ message: "Payment Error"});
+        res.status(500).json({message: "Payment Error"});
     }
 });
 

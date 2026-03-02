@@ -18,7 +18,7 @@ module.exports = function authMiddleware(req, res, next) {
 
     // Check if token exists
     if (!token) {
-        return res.status(401).json({ message: 'No token. Authorisation denied' });
+        return res.status(401).json({message: 'No token. Authorisation denied'});
     }
 
     // Verify token is valid
@@ -33,6 +33,6 @@ module.exports = function authMiddleware(req, res, next) {
         next();
     } catch (err) {
         console.error("Middleware Authorisation Error:", err.message);
-        res.status(401).json({ message: 'Token is not valid' });
+        res.status(401).json({message: 'Token is not valid'});
     }
 };

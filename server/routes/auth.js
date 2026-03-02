@@ -16,13 +16,13 @@ const auth = require('../middleware/auth');
  * @author Ethan Swain
  */
 router.post('/register', async (req, res) => {
-    const { name, email, phone, password } = req.body;
+    const {name, email, phone, password} = req.body;
 
     try {
         // Check if user already exists from email
-        let user = await User.findOne({ email });
+        let user = await User.findOne({email});
         if (user) {
-            return res.status(400).json({ message: 'User already exists'});
+            return res.status(400).json({message: 'User already exists'});
         }
 
         // Create new user instance
@@ -40,7 +40,7 @@ router.post('/register', async (req, res) => {
         // Save to DB
         await user.save();
 
-        res.status(201).json({ message: 'User successfully registered'});
+        res.status(201).json({message: 'User successfully registered'});
     } catch (err) {
         console.error(err.message);
         res.status(500).send('Server Error');
@@ -55,18 +55,18 @@ router.post('/register', async (req, res) => {
  * @param res HTTP Response object
  */
 router.post('/login', async (req, res) => {
-    const { email, password } = req.body;
+    const {email, password} = req.body;
 
     try {
-        let user = await User.findOne({ email });
+        let user = await User.findOne({email});
         if (!user) {
-            return res.status(400).json({ message: 'Invalid credentials' });
+            return res.status(400).json({message: 'Invalid credentials'});
         }
 
         // Compare password with encrypted DB password
         const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) {
-            return res.status(400).json({ message: 'Invalid credentials' });
+            return res.status(400).json({message: 'Invalid credentials'});
         }
 
         // Create JWT payload
@@ -81,10 +81,10 @@ router.post('/login', async (req, res) => {
         jwt.sign(
             payload,
             process.env.JWT_SECRET,
-            { expiresIn: '30d' },
+            {expiresIn: '30d'},
             (err, token) => {
                 if (err) throw err;
-                res.json({ token });
+                res.json({token});
             }
         );
     } catch (err) {

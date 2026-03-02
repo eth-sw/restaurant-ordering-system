@@ -10,9 +10,10 @@ import {PaymentElement, useElements, useStripe} from "@stripe/react-stripe-js";
  *
  * @author Ethan Swain
  */
-export default function PaymentForm({ onPaymentSuccess }) {
+export default function PaymentForm({onPaymentSuccess}) {
     const stripe = useStripe();
     const elements = useElements();
+
     const [message, setMessage] = useState(null);
     const [isProcessing, setIsProcessing] = useState(false);
 
@@ -23,8 +24,10 @@ export default function PaymentForm({ onPaymentSuccess }) {
 
         setIsProcessing(true);
 
-        // Confirms payment with Stripe
-        const { error, paymentIntent } = await stripe.confirmPayment({
+        /**
+         * Confirms the payment with Stripe.
+         */
+        const {error, paymentIntent} = await stripe.confirmPayment({
             elements,
             confirmParams: {
                 // Return to this page if 3D secure is needed
@@ -40,15 +43,16 @@ export default function PaymentForm({ onPaymentSuccess }) {
             // Places order in DB if successful
             onPaymentSuccess(paymentIntent.id);
         } else {
-            setMessage("Unexpected state");
+            console.error(err);
+            setMessage("Error: Payment unsuccessful.");
             setIsProcessing(false);
         }
     };
 
     return (
-        <form onSubmit={handleSubmit} style={{ marginTop: '20px' }}>
-            <PaymentElement />
-            { message && <div style={{ color: "red", marginTop: "10px" }}>{message}</div>}
+        <form onSubmit={handleSubmit} style={{marginTop: '20px'}}>
+            <PaymentElement/>
+            {message && <div style={{color: "red", marginTop: "10px"}}>{message}</div>}
             <button
                 disabled={isProcessing || !stripe || !elements}
                 id="submit"
@@ -58,7 +62,7 @@ export default function PaymentForm({ onPaymentSuccess }) {
                     cursor: isProcessing ? 'not-allowed' : 'pointer'
                 }}
             >
-                {isProcessing ? "Processing..." : "Pay Now" }
+                {isProcessing ? "Processing..." : "Pay Now"}
             </button>
         </form>
     );

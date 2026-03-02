@@ -8,6 +8,8 @@ const roleCheck = require('../middleware/roleCheck');
 /**
  * Multer Storage Config
  * Defines where and how uploaded images are saved.
+ *
+ * @author Ethan Swain
  */
 const storage = multer.diskStorage({
     destination(req, file, cb) {
@@ -19,7 +21,8 @@ const storage = multer.diskStorage({
 });
 
 /**
- * File filter to ensure only images are uploaded
+ * File filter to ensure only images are uploaded.
+ *
  * @param file jpg, jpeg, png, and webp
  */
 const checkFileType = (file, cb) => {
@@ -42,15 +45,15 @@ const upload = multer({
 });
 
 /**
- * POST: Upload a menu item image
- * Protected route: Only admins and supervisors can upload images
+ * POST: Upload a menu item image.
+ * Protected route: Only admins and supervisors can upload images.
  */
 router.post('/', auth, roleCheck(['admin', 'supervisor']), upload.single('image'), (req, res) => {
     if (!req.file) {
-        return res.status(400).json({ message: 'No file uploaded' });
+        return res.status(400).json({message: 'No file uploaded'});
     }
     // Return URL path so the frontend can save it to MenuItem DB
-    res.send({ imageUrl: `/uploads/${req.file.filename}` });
+    res.send({imageUrl: `/uploads/${req.file.filename}`});
 });
 
 module.exports = router;

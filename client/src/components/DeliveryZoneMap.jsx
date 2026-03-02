@@ -23,8 +23,8 @@ const libraries = ['places', 'drawing'];
  *
  * @author Ethan Swain
  */
-export default function DeliveryZoneMap({ onZoneChange }) {
-    const { isLoaded } = useJsApiLoader({
+export default function DeliveryZoneMap({onZoneChange}) {
+    const {isLoaded} = useJsApiLoader({
         id: 'google-map-script',
         googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY,
         libraries: libraries
@@ -84,14 +84,14 @@ export default function DeliveryZoneMap({ onZoneChange }) {
 
             {path.length > 0 && (
                 <Polygon
-                    paths={path.map(p => ({ lng: p[0], lat: p[1] }))}
+                    paths={path.map(p => ({lng: p[0], lat: p[1]}))}
                     options={{
                         fillColor: "#4CAF50",
                         strokeColor: "#4CAF50",
                         fillOpacity: 0.4,
                     }}
                     onClick={() => {
-                        if(globalThis.confirm("Reset delivery zone?")) {
+                        if (globalThis.confirm("Reset delivery zone?")) {
                             setPath([]);
                             onZoneChange(null);
                         }
