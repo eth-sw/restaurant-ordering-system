@@ -95,9 +95,15 @@ const Checkout = () => {
     const initPayment = async () => {
         setLoading(true);
         try {
-            const amountInPence = Math.round(total * 100);
             const token = localStorage.getItem('token');
             const headers = token ? {'x-auth-token': token} : {};
+
+            const payload = {
+                items: basketItems.map(item => ({
+                    menuItem: item._id,
+                    qty: item.qty
+                }))
+            };
 
             const res = await axios.post('http://localhost:5000/api/payment/create-payment-intent',
                 {amount: amountInPence},

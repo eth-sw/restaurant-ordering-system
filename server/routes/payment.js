@@ -3,6 +3,8 @@ const router = express.Router();
 const Stripe = require('stripe');
 const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
 const optionalAuth = require('../middleware/optionalAuth');
+const MenuItem = require('../models/MenuItem');
+const Restaurant = require('../models/Restaurant');
 
 /**
  * POST: Create a Stripe payment intent.
@@ -15,11 +17,31 @@ const optionalAuth = require('../middleware/optionalAuth');
  */
 router.post('/create-payment-intent', optionalAuth, async (req, res) => {
     try {
-        const {amount} = req.body;
+        const { items } = req.body;
+
+        if (!items || items.length === 0) {
+            return res.status(400).json({ message: "No items provided"})
+        }
+
+        let calculatedTotal = 0;
+
+        for (let item of items) {
+            const dbItem = await MenuItem.findById(item.menuItem);
+            if (dbItem) {
+                calculatedTotal += (dbItem.price * item.qty);
+            }
+        }
+
+        const restaurant = await Restaurant.findOne();
+        if (restaurant && restaurant.deliveryFee) {
+            calculatedTotal += restaurant.deliveryFee;
+        }
+
+        const amountInPence = Math.round(calculatedTotal * 100);
 
         // Create PaymentIntent with the order amount and currency
         const paymentIntent = await stripe.paymentIntents.create({
-            amount: amount,
+            amount: amountInPence,
             currency: "gbp",
             automatic_payment_methods: {
                 enabled: true,

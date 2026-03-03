@@ -20,7 +20,7 @@ const {sendOrderUpdateSMS} = require('../utils/sms');
  * @author Ethan Swain
  */
 router.post('/', optionalAuth, async (req, res) => {
-    const {items, totalAmount, paymentId, customerInfo} = req.body;
+    const {items, paymentId, customerInfo} = req.body;
 
     try {
         if (!items || items.length === 0) {
@@ -37,12 +37,32 @@ router.post('/', optionalAuth, async (req, res) => {
             return res.status(500).json({message: "Restaurant config missing"});
         }
 
+        let calculatedTotal = 0;
+        const secureItems = [];
+
+        for (let item of items) {
+            const dbItem = await MenuItem.findById(item.menuItem);
+            if (dbItem) {
+                calculatedTotal += (dbItem.price * item.qty);
+                secureItems.push({
+                    menuItem: dbItem._id,
+                    name: dbItem.name,
+                    price: dbItem.price,
+                    qty: item.qty
+                })
+            }
+        }
+
+        if (restaurant.deliveryFee) {
+            calculatedTotal += restaurant.deliveryFee;
+        }
+
         const newOrder = new Order({
             user: req.user ? req.user.id : null, // Set user ID if logged in, otherwise null
             customerInfo,
             restaurant: restaurant._id,
-            items,
-            totalAmount,
+            items: secureItems,
+            totalAmount: calculatedTotal,
             paymentId: paymentId || null,
             status: paymentId ? 'Accepted' : 'Pending'
         });
