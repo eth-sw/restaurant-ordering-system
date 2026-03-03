@@ -27,8 +27,8 @@ const RestaurantOrders = () => {
             setOrders(res.data);
             setError('');
         } catch (err) {
-            console.error("Error fetching orders", err);
-            setError("Could not load orders");
+            console.error(err);
+            setError("Error: Could not load orders.");
         }
     };
 
@@ -43,12 +43,13 @@ const RestaurantOrders = () => {
         try {
             const token = localStorage.getItem('token');
             await axios.patch(`http://localhost:5000/api/orders/${id}/status`,
-                { status },
-                { headers: { 'x-auth-token': token } }
+                {status},
+                {headers: {'x-auth-token': token}}
             );
             fetchOrders();
         } catch (err) {
-            alert("Error updating status");
+            console.error(err);
+            setMessage("Error: Could not update status.");
         }
     };
 
@@ -60,43 +61,75 @@ const RestaurantOrders = () => {
     }, []);
 
     return (
-        <div style={{ padding: '20px', maxWidth: '1000px', margin: '0 auto' }}>
+        <div style={{padding: '20px', maxWidth: '1000px', margin: '0 auto'}}>
             <h1>Kitchen Orders</h1>
-            {error && <p style={{ color: 'red' }}>{error}</p>}
+            {error && <p style={{color: 'red'}}>{error}</p>}
 
             {orders.length === 0 && !error ? <p>No active orders</p> : null}
 
             {orders.map(order => (
-                <div key={order._id} style={{ border: '1px solid #ccc', padding: '20px', marginBottom: '15px', borderRadius: '8px', background: order.status === 'Pending' ? '#fff3e0' : 'white' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #eee', paddingBottom: '10px', marginBottom: '10px' }}>
+                <div key={order._id} style={{
+                    border: '1px solid #ccc',
+                    padding: '20px',
+                    marginBottom: '15px',
+                    borderRadius: '8px',
+                    background: order.status === 'Pending' ? '#fff3e0' : 'white'
+                }}>
+                    <div style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        borderBottom: '1px solid #eee',
+                        paddingBottom: '10px',
+                        marginBottom: '10px'
+                    }}>
                         <div>
-                            <h3 style={{ margin: 0 }}>Order #{order._id.slice(-4)}</h3>
+                            <h3 style={{margin: 0}}>Order #{order._id.slice(-4)}</h3>
                             <small>
                                 Customer: {order.customerInfo?.name || order.user?.name || "Unknown"} |
                                 Total: £{order.totalAmount?.toFixed(2)}
                             </small>
                             {order.customerInfo && (
-                                <div style={{ fontSize: '0.85em', color: '#555', marginTop: '5px' }}>
+                                <div style={{fontSize: '0.85em', color: '#555', marginTop: '5px'}}>
                                     {order.customerInfo.address} <br/>
                                     {order.customerInfo.phone}
                                 </div>
                             )}
                         </div>
-                        <strong style={{ color: order.status === 'Delivered' ? 'green' : '#1976d2', fontSize: '1.2em' }}>{order.status}</strong>
+                        <strong style={{
+                            color: order.status === 'Delivered' ? 'green' : '#1976d2',
+                            fontSize: '1.2em'
+                        }}>{order.status}</strong>
                     </div>
 
-                    <ul style={{ listStyleType: 'none', padding: 0 }}>
+                    <ul style={{listStyleType: 'none', padding: 0}}>
                         {order.items.map((item, i) => (
-                            <li key={i} style={{ padding: '5px 0' }}>
-                                <span style={{ fontWeight: 'bold', marginRight: '10px' }}>{item.qty}x</span>
+                            <li key={i} style={{padding: '5px 0'}}>
+                                <span style={{fontWeight: 'bold', marginRight: '10px'}}>{item.qty}x</span>
                                 {item.name}
                             </li>
                         ))}
                     </ul>
 
-                    <div style={{ marginTop: '15px', paddingTop: '10px', borderTop: '1px solid #eee' }}>
-                        <button onClick={() => updateStatus(order._id, 'Cooking')} style={{ marginRight: '10px', background: 'orange', padding: '8px 15px', border: 'none', color: 'white', borderRadius: '4px', cursor: 'pointer' }}>Start Cooking</button>
-                        <button onClick={() => updateStatus(order._id, 'Delivered')} style={{ background: 'green', padding: '8px 15px', border: 'none', color: 'white', borderRadius: '4px', cursor: 'pointer' }}>Mark Delivered</button>
+                    <div style={{marginTop: '15px', paddingTop: '10px', borderTop: '1px solid #eee'}}>
+                        <button onClick={() => updateStatus(order._id, 'Cooking')} style={{
+                            marginRight: '10px',
+                            background: 'orange',
+                            padding: '8px 15px',
+                            border: 'none',
+                            color: 'white',
+                            borderRadius: '4px',
+                            cursor: 'pointer'
+                        }}>Start Cooking
+                        </button>
+                        <button onClick={() => updateStatus(order._id, 'Delivered')} style={{
+                            background: 'green',
+                            padding: '8px 15px',
+                            border: 'none',
+                            color: 'white',
+                            borderRadius: '4px',
+                            cursor: 'pointer'
+                        }}>Mark Delivered
+                        </button>
                     </div>
                 </div>
             ))}

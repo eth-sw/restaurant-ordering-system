@@ -5,7 +5,7 @@ const optionalAuth = require('../middleware/optionalAuth');
 const Order = require('../models/Order');
 const Restaurant = require('../models/Restaurant');
 const roleCheck = require("../middleware/roleCheck");
-const { sendOrderUpdateSMS } = require('../utils/sms');
+const {sendOrderUpdateSMS} = require('../utils/sms');
 
 /**
  * POST: Create a new order.
@@ -20,21 +20,21 @@ const { sendOrderUpdateSMS } = require('../utils/sms');
  * @author Ethan Swain
  */
 router.post('/', optionalAuth, async (req, res) => {
-    const { items, totalAmount, paymentId, customerInfo } = req.body;
+    const {items, totalAmount, paymentId, customerInfo} = req.body;
 
     try {
         if (!items || items.length === 0) {
-            return res.status(400).json({ message: "No items in order" });
+            return res.status(400).json({message: "No items in order"});
         }
 
         // Confirms customer delivery info is present
         if (!customerInfo || !customerInfo.address || !customerInfo.phone || !customerInfo.name) {
-            return res.status(400).json({ message: "Missing delivery information"})
+            return res.status(400).json({message: "Missing delivery information"})
         }
 
         const restaurant = await Restaurant.findOne();
         if (!restaurant) {
-            return res.status(500).json({ message: "Restaurant config missing" });
+            return res.status(500).json({message: "Restaurant config missing"});
         }
 
         const newOrder = new Order({
@@ -66,7 +66,7 @@ router.post('/', optionalAuth, async (req, res) => {
  */
 router.get('/', auth, async (req, res) => {
     try {
-        const orders = await Order.find({ user: req.user.id }).sort({ createdAt: -1 });
+        const orders = await Order.find({user: req.user.id}).sort({createdAt: -1});
         res.json(orders);
     } catch (err) {
         console.error("Error: ", err.message);
@@ -86,7 +86,7 @@ router.get('/all', auth, roleCheck(['staff', 'supervisor', 'admin']), async (req
     try {
         const orders = await Order.find()
             .populate('user', ['name', 'email'])
-            .sort({ createdAt: -1 });
+            .sort({createdAt: -1});
         res.json(orders);
     } catch (err) {
         console.error("Error: ", err.message);
@@ -103,12 +103,12 @@ router.get('/all', auth, roleCheck(['staff', 'supervisor', 'admin']), async (req
  * @returns {Object} JSON object of updated order
  */
 router.patch('/:id/status', auth, roleCheck(['staff', 'supervisor', 'admin']), async (req, res) => {
-    const { status } = req.body;
+    const {status} = req.body;
 
     try {
         let order = await Order.findById(req.params.id).populate('user', ['name', 'phone']);
         if (!order) {
-            return res.status(404).json({ message:'Order not found' });
+            return res.status(404).json({message: 'Order not found'});
         }
 
         order.status = status;

@@ -5,6 +5,7 @@ const jwt = require("jsonwebtoken");
  * Checks for a JWT token in the request header.
  * If present and valid: Attaches the user payload to the request object.
  * If NOT present: Allows the request to proceed anyway (Guest Checkout requirement).
+ *
  * @param req HTTP Request object
  * @param res HTTP Response object
  * @param next Next middleware function

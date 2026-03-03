@@ -14,11 +14,14 @@ const BasketContext = createContext();
  *
  * @author Ethan Swain
  */
-export const BasketProvider = ({ children }) => {
+export const BasketProvider = ({children}) => {
     let user = null;
     const token = localStorage.getItem('token');
     if (token) {
-        try { user = jwtDecode(token).user; } catch (e) {}
+        try {
+            user = jwtDecode(token).user;
+        } catch (e) {
+        }
     }
 
     const storageKey = user ? `basket_${user.id}` : 'basket_guest';
@@ -36,7 +39,7 @@ export const BasketProvider = ({ children }) => {
 
     /**
      * Adds an item to the basket or increments quantity if it already exists.
-     * Only the customer can modify their basket.
+     * Only the user who added the items to their basket can modify it.
      *
      * @param item Menu item object to add
      */
@@ -51,11 +54,11 @@ export const BasketProvider = ({ children }) => {
             if (existingItem) {
                 // Increment quantity
                 return prevItems.map((i) =>
-                    i._id === item._id ? { ...i, qty: i.qty + 1} : i
+                    i._id === item._id ? {...i, qty: i.qty + 1} : i
                 );
             }
             // Add new items, initial quanity is 1
-            return [...prevItems, { ...item, qty: 1 }];
+            return [...prevItems, {...item, qty: 1}];
         });
     };
 
@@ -77,7 +80,7 @@ export const BasketProvider = ({ children }) => {
     const decreaseQuantity = (itemId) => {
         setBasketItems((prevItems) =>
             prevItems.map((i) =>
-                i._id === itemId ? { ...i, qty: i.qty - 1 } : i
+                i._id === itemId ? {...i, qty: i.qty - 1} : i
             ).filter((i) => i.qty > 0)
         );
     };
@@ -94,7 +97,7 @@ export const BasketProvider = ({ children }) => {
     /**
      * Removes all items from the basket.
      */
-    const clearBasket =() => {
+    const clearBasket = () => {
         setBasketItems([]);
     };
 
@@ -118,5 +121,5 @@ export const BasketProvider = ({ children }) => {
     );
 };
 
-BasketProvider.propTypes = { children: PropTypes.node.isRequired };
+BasketProvider.propTypes = {children: PropTypes.node.isRequired};
 export default BasketContext;

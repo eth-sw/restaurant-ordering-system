@@ -16,13 +16,13 @@ const libraries = ['places', 'drawing'];
  *
  * @author Ethan Swain
  */
-export default function AddressCheck({ onAddressValidated }) {
+export default function AddressCheck({onAddressValidated}) {
     const [address, setAddress] = useState('');
     const [loading, setLoading] = useState(false);
-    const [error, setError] = useState('');
+    const [message, setMessage] = useState(null);
 
     // Load Google Maps script
-    const { isLoaded } = useJsApiLoader({
+    const {isLoaded} = useJsApiLoader({
         id: 'google-map-script',
         googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY,
         libraries: libraries
@@ -33,7 +33,7 @@ export default function AddressCheck({ onAddressValidated }) {
      */
     const handleCheck = async (e) => {
         e.preventDefault();
-        setError('');
+        setMessage('');
         setLoading(true);
 
         try {
@@ -51,11 +51,11 @@ export default function AddressCheck({ onAddressValidated }) {
                 // Sends data payload back to parent (Home.jsx)
                 onAddressValidated(address, coords, res.data);
             } else {
-                setError("Sorry, we do not deliver to this location.");
+                setMessage("Sorry, we do not deliver to this location.");
             }
         } catch (err) {
-            console.error("ERROR:", err);
-            setError(err.response?.data?.message || err.message || "Error validating location");
+            console.error(err);
+            setMessage("Error: Could not validate location.");
         } finally {
             setLoading(false);
         }
@@ -64,21 +64,22 @@ export default function AddressCheck({ onAddressValidated }) {
     if (!isLoaded) return <div>Loading Maps...</div>;
 
     return (
-        <div className="address-check-container" style={{ padding: '20px', border: '1px solid #ddd', borderRadius: '8px' }}>
+        <div className="address-check-container"
+             style={{padding: '20px', border: '1px solid #ddd', borderRadius: '8px'}}>
             <form onSubmit={handleCheck}>
                 <input
                     type="text"
                     placeholder="Enter your delivery address..."
                     value={address}
                     onChange={(e) => setAddress(e.target.value)}
-                    style={{ padding: '10px', width: '70%', marginRight: '10px' }}
+                    style={{padding: '10px', width: '70%', marginRight: '10px'}}
                     required
                 />
-                <button type="submit" disabled={loading} style={{ padding: '10px 20px', cursor: 'pointer' }}>
+                <button type="submit" disabled={loading} style={{padding: '10px 20px', cursor: 'pointer'}}>
                     {loading ? 'Checking...' : 'Check Availability'}
                 </button>
             </form>
-            {error && <p style={{ color: 'red', marginTop: '10px', fontWeight: 'bold' }}>{error}</p>}
+            {message && <p style={{color: 'red', marginTop: '10px', fontWeight: 'bold'}}>{message}</p>}
         </div>
     );
 }

@@ -13,7 +13,7 @@ import './Register.css';
  * @author Ethan Swain
  */
 const Login = () => {
-    // State to hold form inputs
+    // State for form inputs
     const [formData, setFormData] = useState({
         email: '',
         password: ''
@@ -25,14 +25,17 @@ const Login = () => {
     // Hook to navigate user after logging in successfully
     const navigate = useNavigate();
 
-    const { email, password } = formData;
+    const {email, password} = formData;
 
     // Update state dynamically as user types
     const onChange = (e) => {
-        setFormData({ ...formData, [e.target.name]: e.target.value });
+        let {name, value} = e.target;
+        setFormData({...formData, [name]: value});
     };
 
-    // Handles form submission
+    /**
+     * Posts the user details to the backend API to verify details.
+     */
     const onSubmit = async (e) => {
         e.preventDefault(); // Prevents default HTML form reload
         try {
@@ -42,12 +45,13 @@ const Login = () => {
             // Restaurant received JWT in browser's local storage
             localStorage.setItem('token', res.data.token);
 
-            setMessage('Login Successful! Redirecting...');
-            setTimeout(() =>{
+            setMessage("Login Successful! Redirecting...");
+            setTimeout(() => {
                 window.location.href = '/';
             }, 1500);
         } catch (err) {
-            setMessage('Error: ' + (err.response?.data?.message || 'Login Failed'));
+            console.error(err);
+            setMessage("Error: Login Failed (Server Error).");
         }
     };
 
@@ -74,6 +78,7 @@ const Login = () => {
                             name="email"
                             value={email}
                             onChange={onChange}
+                            placeholder="e.g. customer@restaurant.com"
                             required
                         />
                     </div>
@@ -94,7 +99,7 @@ const Login = () => {
                         Login
                     </button>
                 </form>
-                <p style={{ marginTop: '20px', fontSize: '14px', color: '#666' }}>
+                <p style={{marginTop: '20px', fontSize: '14px', color: '#666'}}>
                     Don't have an account? <Link to="/register">Register here</Link>
                 </p>
             </div>

@@ -12,18 +12,18 @@ const axios = require('axios');
  *
  * @author Ethan Swain
  */
-router.post('/check-availability', async(req, res) => {
-    const { latitude, longitude } = req.body;
+router.post('/check-availability', async (req, res) => {
+    const {latitude, longitude} = req.body;
 
     if (!latitude || !longitude) {
-        return res.status(400).json({ message: "Missing location data" });
+        return res.status(400).json({message: "Missing location data"});
     }
 
     try {
         const restaurant = await Restaurant.findOne();
 
         if (!restaurant) {
-            return res.status(404).json({ message: "No restaurant config found"})
+            return res.status(404).json({message: "No restaurant config found"})
         }
 
         const isInside = await Restaurant.findOne({

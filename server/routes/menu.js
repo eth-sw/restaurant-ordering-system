@@ -33,7 +33,7 @@ router.get('/', async (req, res) => {
  * @author Ethan Swain
  */
 router.post('/', auth, roleCheck(['admin', 'supervisor']), async (req, res) => {
-    const { name, description, price, category, image } = req.body;
+    const {name, description, price, category, image} = req.body;
 
     try {
         const newItem = new MenuItem({
@@ -59,11 +59,11 @@ router.delete('/:id', auth, roleCheck(['admin', 'supervisor']), async (req, res)
     try {
         const item = await MenuItem.findById(req.params.id);
         if (!item) {
-            return res.status(404).json({ message: "Item not found" });
+            return res.status(404).json({message: "Item not found"});
         }
 
         await MenuItem.findByIdAndDelete(req.params.id);
-        res.json({ message: "Item removed"});
+        res.json({message: "Item removed"});
     } catch (err) {
         console.error(err.message);
         res.status(500).send('Server Error');
@@ -77,9 +77,9 @@ router.delete('/:id', auth, roleCheck(['admin', 'supervisor']), async (req, res)
 router.put('/:id', auth, roleCheck(['admin', 'supervisor']), async (req, res) => {
     try {
         let item = await MenuItem.findById(req.params.id);
-        if (!item) return res.status(404).json({ message: "Item not found" });
+        if (!item) return res.status(404).json({message: "Item not found"});
 
-        const { name, description, price, category, image, isAvailable } = req.body;
+        const {name, description, price, category, image, isAvailable} = req.body;
         if (name) item.name = name;
         if (description) item.description = description;
         if (price) item.price = price;

@@ -23,4 +23,4 @@ const sendOrderUpdateSMS = async (toPhone, status, orderId) => {
     }
 };
 
-module.exports = { sendOrderUpdateSMS };
+module.exports = {sendOrderUpdateSMS};

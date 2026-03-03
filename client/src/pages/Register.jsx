@@ -13,7 +13,7 @@ import './Register.css';
  * @author Ethan Swain
  */
 const Register = () => {
-    // State to hold form input values
+    // State for form inputs
     const [formData, setFormData] = useState({
         name: '',
         email: '',
@@ -24,27 +24,30 @@ const Register = () => {
     // State to handle success/error messages
     const [message, setMessage] = useState('');
 
-    // Hook to redirect user after registering successfully
+    // Hook to navigate user after registering successfully
     const navigate = useNavigate();
 
-    const { name, email, phone, password } = formData;
+    const {name, email, phone, password} = formData;
 
     // Update state dynamically as user types
     const onChange = (e) => {
-        setFormData({ ...formData, [e.target.name]: e.target.value });
+        let {name, value} = e.target;
+        setFormData({...formData, [name]: value});
     };
 
-    // Handle form submission
+    /**
+     * Posts the user details to the backend API to create details.
+     */
     const onSubmit = async (e) => {
         e.preventDefault(); // Prevents default HTML form reload
         try {
             // Send credentials to backend
             await axios.post('http://localhost:5000/api/auth/register', formData);
 
-            setMessage('Registration Successful! Redirecting...');
+            setMessage("Registration Successful! Redirecting...");
             setTimeout(() => navigate('/login'), 1500);
         } catch (err) {
-            setMessage('Error: ' + (err.response?.data?.message || 'Server Error'));
+            setMessage("Error: Registration Failed (Server Error).");
         }
     };
 
@@ -71,7 +74,7 @@ const Register = () => {
                             name="name"
                             value={name}
                             onChange={onChange}
-                            placeholder="John Smith"
+                            placeholder="e.g. John Smith"
                             required
                         />
                     </div>
@@ -84,7 +87,7 @@ const Register = () => {
                             name="email"
                             value={email}
                             onChange={onChange}
-                            placeholder="johnsmith@email.com"
+                            placeholder="e.g. johnsmith@email.com"
                             required
                         />
                     </div>
@@ -97,7 +100,7 @@ const Register = () => {
                             name="phone"
                             value={phone}
                             onChange={onChange}
-                            placeholder="+447123456789"
+                            placeholder="e.g. +447123456789"
                             required
                         />
                     </div>

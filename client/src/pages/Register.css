@@ -1,4 +1,4 @@
-/* This makes the page fill the entire screen and centers the content */
+/* Makes the page fill the entire screen and centers the content */
 .register-container {
     display: flex;
     justify-content: center;
@@ -7,7 +7,7 @@
     background-color: #f4f7f6; /* Light grey background */
 }
 
-/* The white card that holds the form */
+/* White card that holds the form */
 .register-card {
     background: white;
     padding: 40px;
@@ -26,7 +26,7 @@
 /* Styling the input fields */
 .form-group {
     margin-bottom: 20px;
-    text-align: left; /* Labels should be left-aligned */
+    text-align: left; /* Labels should be left aligned */
 }
 
 .form-group label {
