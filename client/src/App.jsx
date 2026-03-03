@@ -14,6 +14,7 @@ import SetDeliveryZone from './pages/SetDeliveryZone';
 import EditMenu from './pages/EditMenu';
 import AdminUsers from './pages/AdminUsers';
 import AdminSettings from './pages/AdminSettings';
+import AdminLogs from "./pages/AdminLogs.jsx";
 
 /**
  * Protected Route Wrapper Component.
@@ -36,7 +37,7 @@ const ProtectedRoute = ({children, allowedRoles}) => {
             return <Navigate to="/" replace/>;
         }
         return children;
-    } catch (e) {
+    } catch (err) {
         return <Navigate to="/login" replace/>;
     }
 }
@@ -58,7 +59,7 @@ function App() {
         if (token) {
             try {
                 setUser(jwtDecode(token).user);
-            } catch (e) {
+            } catch (err) {
                 console.error(err);
                 setMessage("Error: Invalid token");
             }
@@ -201,6 +202,9 @@ function App() {
                         }/>
                         <Route path="/admin/settings" element={
                             <ProtectedRoute allowedRoles={['supervisor', 'admin']}><AdminSettings/></ProtectedRoute>
+                        }/>
+                        <Route path="/admin/logs" element={
+                            <ProtectedRoute allowedRoles={['admin']}><AdminLogs/></ProtectedRoute>
                         }/>
                     </Routes>
                 </div>

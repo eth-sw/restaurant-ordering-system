@@ -29,6 +29,7 @@ app.use('/api/orders', require('./routes/orders'));
 app.use('/api/payment', require('./routes/payment'));
 app.use('/api/upload', require('./routes/upload'));
 app.use('/api/users', require('./routes/users'));
+app.use('/api/logs', require('./routes/logs'));
 
 /**
  * Backend and Database Status Check

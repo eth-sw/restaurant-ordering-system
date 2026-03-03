@@ -3,6 +3,7 @@ const router = express.Router();
 const Restaurant = require('../models/Restaurant');
 const auth = require('../middleware/auth');
 const roleCheck = require("../middleware/roleCheck");
+const log = require('../models/Log');
 
 /**
  * GET: Retrieve restaurant config.
@@ -40,6 +41,13 @@ router.put('/zone', auth, roleCheck(['admin', 'supervisor']), async (req, res) =
 
         restaurant.deliveryZone = req.body.deliveryZone;
         await restaurant.save();
+
+        await Log.create({
+            action: 'UPDATE_SETTINGS',
+            description: `Global restaurant settings updated`,
+            adminId: req.user.id
+        });
+
         res.json(restaurant);
     } catch (err) {
         console.error("Zone Update Error: ", err);

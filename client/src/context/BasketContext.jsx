@@ -20,7 +20,7 @@ export const BasketProvider = ({children}) => {
     if (token) {
         try {
             user = jwtDecode(token).user;
-        } catch (e) {
+        } catch (err) {
         }
     }
 
