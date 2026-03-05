@@ -70,6 +70,7 @@ const Checkout = () => {
         e.preventDefault();
         setLoading(true);
         setMessage('');
+        setError('');
 
         try {
             const coords = await geocodeAddress(customerInfo.address);
@@ -82,11 +83,11 @@ const Checkout = () => {
                 setAddressVerified(true);
                 setMessage(`Address verified. ETA: ${res.data.eta}`);
             } else {
-                setMessage("Error: This address is outside the delivery zone.");
+                setError("Error: This address is outside the delivery zone.");
             }
         } catch (err) {
             console.error(err);
-            setMessage("Error: Could not validate address.");
+            setError("Error: Could not validate address.");
         } finally {
             setLoading(false);
         }
@@ -94,6 +95,8 @@ const Checkout = () => {
 
     const initPayment = async () => {
         setLoading(true);
+        setMessage('');
+        setError('');
         try {
             const token = localStorage.getItem('token');
             const headers = token ? {'x-auth-token': token} : {};
@@ -106,7 +109,7 @@ const Checkout = () => {
             };
 
             const res = await axios.post('http://localhost:5000/api/payment/create-payment-intent',
-                {amount: amountInPence},
+                payload,
                 {headers}
             );
             // Switches UI to the payment form
@@ -114,7 +117,7 @@ const Checkout = () => {
             setLoading(false);
         } catch (err) {
             console.error(err);
-            setMessage("Error: Failed to initialise payment.");
+            setError("Error: Failed to initialise payment.");
             setLoading(false);
         }
     };
@@ -125,6 +128,8 @@ const Checkout = () => {
      */
     const handlePlaceOrder = async (paymentId) => {
         setLoading(true);
+        setMessage('');
+        setError('');
         try {
             const token = localStorage.getItem('token');
             const headers = token ? {'x-auth-token': token} : {};
@@ -152,7 +157,7 @@ const Checkout = () => {
 
         } catch (err) {
             console.error(err);
-            setMessage("Error: Could not place order.");
+            setError("Error: Could not place order.");
             setLoading(false);
         }
     };

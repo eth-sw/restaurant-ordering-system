@@ -87,7 +87,8 @@ function App() {
     // Role-based helpers for any conditional rendering
     const isCustomer = user && user.role === 'customer';
     const isStaff = user && ['staff', 'supervisor', 'admin'].includes(user.role);
-    const isAdmin = user && ['supervisor', 'admin'].includes(user.role);
+    const isSupervisor = user && ['supervisor', 'admin'].includes(user.role);
+    const isAdmin = user && user.role === 'admin';
 
     return (
         <BasketProvider>
@@ -111,23 +112,30 @@ function App() {
                             }}>
                                 Home
                             </Link>
+                            {/* Staff */}
                             {isStaff && (
                                 <Link to="/kitchen" style={{marginRight: '15px', color: '#d32f2f', fontWeight: 'bold'}}>
                                     Kitchen Orders
                                 </Link>
                             )}
+                            {/* Admin */}
                             {isAdmin && (
                                 <>
-                                    <Link to="/delivery-zone" style={{marginRight: '15px', color: '#1976d2'}}>
+                                    <Link to="/delivery-zone"
+                                        style={{marginRight: '15px', color: '#1976d2'}}>
                                         Delivery Zone
                                     </Link>
                                     <Link to="/admin/users"
-                                          style={{marginRight: '15px', color: '#6a1b9a', fontWeight: 'bold'}}>
+                                        style={{marginRight: '15px', color: '#6a1b9a', fontWeight: 'bold'}}>
                                         Manage Users
                                     </Link>
                                     <Link to="/admin/settings"
-                                          style={{marginRight: '15px', color: '#e65100', fontWeight: 'bold'}}>
+                                        style={{marginRight: '15px', color: '#e65100', fontWeight: 'bold'}}>
                                         Settings
+                                    </Link>
+                                    <Link to="/admin/logs"
+                                        style={{marginRight: '15px', color: '#424242', fontWeight: 'bold'}}>
+                                        System Logs
                                     </Link>
                                 </>
                             )}
@@ -183,25 +191,27 @@ function App() {
                             <ProtectedRoute allowedRoles={['customer']}><OrderHistory/></ProtectedRoute>
                         }/>
 
-                        {/* Staff/Admin routes */}
+                        {/* Staff routes */}
                         <Route path="/kitchen" element={
                             <ProtectedRoute
                                 allowedRoles={['staff', 'supervisor', 'admin']}><RestaurantOrders/></ProtectedRoute>
                         }/>
-                        <Route path="/delivery-zone" element={
-                            <ProtectedRoute allowedRoles={['supervisor', 'admin']}><SetDeliveryZone/></ProtectedRoute>
-                        }/>
+                        {/* Supervisor routes */}
                         <Route path="/add-menu" element={
                             <ProtectedRoute allowedRoles={['supervisor', 'admin']}><AddMenu/></ProtectedRoute>
                         }/>
                         <Route path="/edit-menu/:id" element={
                             <ProtectedRoute allowedRoles={['supervisor', 'admin']}><EditMenu/></ProtectedRoute>
                         }/>
+                        {/* Admin routes */}
+                        <Route path="/delivery-zone" element={
+                            <ProtectedRoute allowedRoles={['admin']}><SetDeliveryZone/></ProtectedRoute>
+                        }/>
                         <Route path="/admin/users" element={
                             <ProtectedRoute allowedRoles={['admin']}><AdminUsers/></ProtectedRoute>
                         }/>
                         <Route path="/admin/settings" element={
-                            <ProtectedRoute allowedRoles={['supervisor', 'admin']}><AdminSettings/></ProtectedRoute>
+                            <ProtectedRoute allowedRoles={['admin']}><AdminSettings/></ProtectedRoute>
                         }/>
                         <Route path="/admin/logs" element={
                             <ProtectedRoute allowedRoles={['admin']}><AdminLogs/></ProtectedRoute>

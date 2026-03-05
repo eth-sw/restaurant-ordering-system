@@ -3,7 +3,7 @@ const router = express.Router();
 const Restaurant = require('../models/Restaurant');
 const auth = require('../middleware/auth');
 const roleCheck = require("../middleware/roleCheck");
-const log = require('../models/Log');
+const Log = require('../models/Log');
 
 /**
  * GET: Retrieve restaurant config.
@@ -30,9 +30,9 @@ router.get('/', async (req, res) => {
 /**
  * PUT: Update delivery zone.
  * Modifies the geofence polygon.
- * Protected route: Only admins and supervisors can update delivery zone.
+ * Protected route: Only admins can update delivery zone.
  */
-router.put('/zone', auth, roleCheck(['admin', 'supervisor']), async (req, res) => {
+router.put('/zone', auth, roleCheck(['admin']), async (req, res) => {
     try {
         const restaurant = await Restaurant.findOne();
         if (!restaurant) {
@@ -77,9 +77,9 @@ router.patch('/status', auth, roleCheck(['admin', 'supervisor']), async (req, re
 
 /**
  * PUT: Update General Restaurant Settings.
- * Protected route: Only admins and supervisors can update these details
+ * Protected route: Only admins can update these details
  */
-router.put('/', auth, roleCheck(['admin', 'supervisor']), async (req, res) => {
+router.put('/', auth, roleCheck(['admin']), async (req, res) => {
     const {name, address, phone, email, deliveryFee, cuisine} = req.body;
 
     try {

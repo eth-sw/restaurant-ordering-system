@@ -6,6 +6,7 @@ const Order = require('../models/Order');
 const Restaurant = require('../models/Restaurant');
 const roleCheck = require("../middleware/roleCheck");
 const {sendOrderUpdateSMS} = require('../utils/sms');
+const MenuItem = require('../models/MenuItem');
 
 /**
  * POST: Create a new order.
@@ -71,7 +72,7 @@ router.post('/', optionalAuth, async (req, res) => {
         res.json(order);
 
     } catch (err) {
-        console.error("Error: ", err.message);
+        console.error(err);
         res.status(500).send('Server Error');
     }
 });
@@ -89,7 +90,7 @@ router.get('/', auth, async (req, res) => {
         const orders = await Order.find({user: req.user.id}).sort({createdAt: -1});
         res.json(orders);
     } catch (err) {
-        console.error("Error: ", err.message);
+        console.error(err);
         res.status(500).send('Server Error');
     }
 });
@@ -109,7 +110,7 @@ router.get('/all', auth, roleCheck(['staff', 'supervisor', 'admin']), async (req
             .sort({createdAt: -1});
         res.json(orders);
     } catch (err) {
-        console.error("Error: ", err.message);
+        console.error(err);
         res.status(500).send('Server Error');
     }
 });
@@ -143,7 +144,7 @@ router.patch('/:id/status', auth, roleCheck(['staff', 'supervisor', 'admin']), a
 
         res.json(order);
     } catch (err) {
-        console.error("Error: ", err.message);
+        console.error(err);
         res.status(500).send('Server Error');
     }
 });
