@@ -2,7 +2,7 @@ import {useContext, useEffect, useState} from 'react';
 import AddressCheck from '../components/AddressCheck';
 import BasketContext from "../context/BasketContext.jsx";
 import axios from 'axios';
-import {Link, useNavigate} from 'react-router-dom';
+import {Link} from 'react-router-dom';
 
 /**
  * Home Component.
@@ -18,21 +18,15 @@ const Home = () => {
     // Auth state
     const [user, setUser] = useState(null);
     const [menuItems, setMenuItems] = useState([]);
-    const [deliveryStatus, setDeliveryStatus] = useState(null);
-    const [eta, setEta] = useState('');
 
     const [isStoreOpen, setIsStoreOpen] = useState(true);
-
     const [restaurantName, setRestaurantName] = useState('Our Restaurant');
 
-    const [message, setMessage] = useState('');
-
     const {basketItems, addToBasket, getBasketTotal} = useContext(BasketContext);
-    const navigate = useNavigate();
 
-    const isAdmin = user && (user.role === 'admin' || user.role === 'supervisor');
-    const isStaff = user && ['admin', 'supervisor', 'staff'].includes(user.role);
-    const isCustomer = user && user.role === 'customer';
+    const isAdmin = user?.role === 'admin' || user?.role === 'supervisor';
+    const isStaff = ['admin', 'supervisor', 'staff'].includes(user?.role);
+    const isCustomer = user?.role === 'customer';
 
     // Fetches the data
     useEffect(() => {
@@ -72,6 +66,10 @@ const Home = () => {
         fetchData();
     }, []);
 
+    /**
+     * Toggles restaurant's open/close status in DB.
+     * Admin/Supervisor only.
+     */
     const toggleStoreStatus = async () => {
         try {
             const token = localStorage.getItem('token');
@@ -86,21 +84,35 @@ const Home = () => {
         }
     };
 
-    // Customer has entered a valid address inside a zone
-    const handleAddressValidated = (address, coords, resultData) => {
-        if (resultData.availableRestaurants && resultData.availableRestaurants.length > 0) {
-            setDeliveryStatus('success');
-            setEta(resultData.eta || '40 mins');
-        } else if (resultData.canDeliver) {
-            setDeliveryStatus('success');
-            setEta(resultData.eta);
-        } else {
-            setDeliveryStatus('fail');
+    /**
+     * Toggles a menu item's availability. Allows staff to mark items as "sold out".
+     * @param id MongoDB ID of Menu Item
+     * @param currentStatus Current availability flag
+     */
+    const toggleAvailability = async (id, currentStatus) => {
+        try {
+            const token = localStorage.getItem('token');
+            const newStatus = currentStatus === false;
+
+            await axios.put(`http://localhost:5000/api/menu/${id}`,
+                {isAvailable: newStatus},
+                {headers: {'x-auth-token': token}}
+            );
+
+            setMenuItems(menuItems.map(item =>
+                item._id === id ? {...item, isAvailable: newStatus} : item
+            ));
+        } catch (err) {
+            console.error(err);
         }
     }
 
+    /**
+     * Permanently delete menu item from the DB.
+     * @param id MongoDB ID of menu item
+     */
     const handleDelete = async (id) => {
-        if (!confirm("Delete this item?")) return;
+        if (!globalThis.confirm("Delete this item?")) return;
         try {
             await axios.delete(`http://localhost:5000/api/menu/${id}`, {
                 headers: {'x-auth-token': localStorage.getItem('token')}
@@ -111,6 +123,22 @@ const Home = () => {
             setMessage("Error: Could not delete item.");
         }
     };
+
+    const getImageUrl = (image) => {
+        if (!image) return 'https://placehold.co/400x300?text=No+Image';
+        if (image.startsWith('/uploads')) return `http://localhost:5000${image}`;
+        return image;
+    };
+
+    const getButtonText = (item) => {
+        if (!isStoreOpen) return 'Store Closed';
+        if (item.isAvailable === false) return 'Unavailable';
+        return 'Add to Basket';
+    };
+
+    const getButtonBg = (item) => (!isStoreOpen || item.isAvailable === false) ? '#9e9e9e' : '#2e7d32';
+    const getButtonCursor = (item) => (!isStoreOpen || item.isAvailable === false) ? 'not-allowed' : 'pointer';
+
     return (
         <div style={{padding: '20px', maxWidth: '1200px', margin: '0 auto'}}>
 
@@ -163,41 +191,8 @@ const Home = () => {
                 )}
 
                 {(!user || isCustomer) && (
-                    <div style={{
-                        maxWidth: '500px',
-                        margin: '30px auto',
-                        background: 'white',
-                        padding: '20px',
-                        borderRadius: '10px',
-                        boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
-                    }}>
-                        <h3 style={{marginTop: 0}}>Check Delivery Availability</h3>
-                        <AddressCheck onAddressValidated={handleAddressValidated}/>
-                        {deliveryStatus === 'success' && (
-                            <div style={{
-                                marginTop: '15px',
-                                color: '#2e7d32',
-                                fontWeight: 'bold',
-                                padding: '10px',
-                                background: '#e8f5e9',
-                                borderRadius: '5px'
-                            }}>
-                                We deliver to you! <br/>
-                                <span style={{fontSize: '0.9em'}}>Estimated Time: {eta}</span>
-                            </div>
-                        )}
-                        {deliveryStatus === 'fail' && (
-                            <div style={{
-                                marginTop: '15px',
-                                color: '#c62828',
-                                fontWeight: 'bold',
-                                padding: '10px',
-                                background: '#ffebee',
-                                borderRadius: '5px'
-                            }}>
-                                We do not deliver to you.
-                            </div>
-                        )}
+                    <div style={{marginTop: '30px'}}>
+                        <AddressCheck/>
                     </div>
                 )}
             </header>
@@ -260,6 +255,8 @@ const Home = () => {
                 }}>
                     {menuItems.map(item => (
                         <div key={item._id} style={{
+                            opacity: item.isAvailable === false ? 0.6 : 1,
+                            filter: item.isAvailable === false ? 'grayscale(100%)' : 'none',
                             border: '1px solid #eee',
                             borderRadius: '10px',
                             padding: '0',
@@ -269,7 +266,7 @@ const Home = () => {
                         }}>
                             {/* Menu Image */}
                             <img
-                                src={item.image ? (item.image.startsWith('/uploads') ? `http://localhost:5000${item.image}` : item.image) : 'https://placehold.co/400x300?text=No+Image'}
+                                src={getImageUrl(item.image)}
                                 alt={item.name}
                                 style={{width: '100%', height: '200px', objectFit: 'cover'}}
                             />
@@ -298,23 +295,39 @@ const Home = () => {
                                 {!isStaff && (
                                     <button
                                         onClick={() => addToBasket(item)}
-                                        disabled={!isStoreOpen}
+                                        disabled={!isStoreOpen || item.isAvailable === false}
                                         style={{
                                             width: '100%',
                                             marginTop: '15px',
                                             padding: '10px',
-                                            background: isStoreOpen ? '#2e7d32' : '#9e9e9e',
+                                            background: getButtonBg(item),
                                             color: 'white',
                                             border: 'none',
                                             borderRadius: '5px',
-                                            cursor: isStoreOpen ? 'pointer' : 'not-allowed'
-                                        }}>
-                                        {isStoreOpen ? 'Add to Basket' : 'Store Closed'}
+                                            cursor: getButtonCursor(item)
+                                        }}
+                                    >
+                                        {getButtonText(item)}
                                     </button>
                                 )}
 
                                 {isAdmin && (
                                     <div style={{display: 'flex', gap: '5px', marginTop: '10px'}}>
+                                        <button
+                                            onClick={() => toggleAvailability(item._id, item.isAvailable)}
+                                            style={{
+                                                flex: 1,
+                                                background: item.isAvailable === false ? '#2e7d32' : '#f57c00',
+                                                color: 'white',
+                                                border: 'none',
+                                                padding: '5px',
+                                                borderRadius: '5px',
+                                                cursor: 'pointer'
+                                            }}
+                                        >
+                                            {item.isAvailable === false ? 'Enable' : 'Disable'}
+                                        </button>
+
                                         <Link to={`/edit-menu/${item._id}`} style={{flex: 1}}>
                                             <button style={{
                                                 width: '100%',
@@ -327,6 +340,7 @@ const Home = () => {
                                             }}>Edit
                                             </button>
                                         </Link>
+
                                         <button onClick={() => handleDelete(item._id)} style={{
                                             flex: 1,
                                             background: '#d32f2f',
