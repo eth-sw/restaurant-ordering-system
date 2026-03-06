@@ -1,6 +1,6 @@
 import {useState} from 'react';
 import axios from 'axios';
-import {Link, useNavigate} from 'react-router-dom';
+import {Link} from 'react-router-dom';
 import './Register.css';
 
 /**
@@ -21,9 +21,6 @@ const Login = () => {
 
     // State to handle success/error messages
     const [message, setMessage] = useState('');
-
-    // Hook to navigate user after logging in successfully
-    const navigate = useNavigate();
 
     const {email, password} = formData;
 
@@ -47,7 +44,7 @@ const Login = () => {
 
             setMessage("Login Successful! Redirecting...");
             setTimeout(() => {
-                window.location.href = '/';
+                globalThis.location.href = '/';
             }, 1500);
         } catch (err) {
             console.error(err);

@@ -27,7 +27,7 @@ const RestaurantSchema = new mongoose.Schema({
     },
     deliveryFee: {
         type: Number,
-        default: 2.50
+        default: 2.5
     },
     deliveryZone: {
         type: {

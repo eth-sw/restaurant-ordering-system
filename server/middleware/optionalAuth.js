@@ -27,6 +27,7 @@ module.exports = function optionalAuth(req, res, next) {
         next();
     } catch (err) {
         // Token is invalid, still proceed as guest
+        console.error(err);
         next();
     }
 };

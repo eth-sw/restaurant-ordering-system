@@ -21,6 +21,7 @@ export const BasketProvider = ({children}) => {
         try {
             user = jwtDecode(token).user;
         } catch (err) {
+            console.error(err);
         }
     }
 

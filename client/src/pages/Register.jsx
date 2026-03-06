@@ -47,6 +47,7 @@ const Register = () => {
             setMessage("Registration Successful! Redirecting...");
             setTimeout(() => navigate('/login'), 1500);
         } catch (err) {
+            console.error(err);
             setMessage("Error: Registration Failed (Server Error).");
         }
     };

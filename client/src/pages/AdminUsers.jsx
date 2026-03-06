@@ -47,6 +47,7 @@ const AdminUsers = () => {
             setMessage('Error: Could not load users');
         }
     };
+
     useEffect(() => {
         fetchUsers();
     }, []);
@@ -103,7 +104,7 @@ const AdminUsers = () => {
      * @param userName Display name of the user
      */
     const handleDelete = async (id, userName) => {
-        if (!window.confirm(`Are you sure you want to delete ${userName}?`)) return;
+        if (!globalThis.confirm(`Are you sure you want to delete ${userName}?`)) return;
 
         try {
             const token = localStorage.getItem('token');
@@ -115,6 +116,15 @@ const AdminUsers = () => {
             setUsers(users.filter(user => user._id !== id));
         } catch (err) {
             alert(err.response?.data?.message || "Error deleting user");
+        }
+    };
+
+    const getRoleStyle = (userRole) => {
+        switch(userRole) {
+            case 'admin': return { color: '#c62828', background: '#ffebee' };
+            case 'supervisor': return { color: '#ef6c00', background: '#fff3e0' };
+            case 'staff': return { color: '#1565c0', background: '#e3f2fd' };
+            default: return { color: '#2e7d32', background: '#e8f5e9' };
         }
     };
 
@@ -216,9 +226,7 @@ const AdminUsers = () => {
                             <td style={{padding: '12px'}}>
                                 {/* Role Badges Styled Based on Staff Hierarchy */}
                                 <span style={{
-                                    padding: '4px 8px', borderRadius: '12px', fontSize: '0.85em', fontWeight: 'bold',
-                                    background: u.role === 'admin' ? '#ffebee' : u.role === 'supervisor' ? '#fff3e0' : u.role === 'staff' ? '#e3f2fd' : '#e8f5e9',
-                                    color: u.role === 'admin' ? '#c62828' : u.role === 'supervisor' ? '#ef6c00' : u.role === 'staff' ? '#1565c0' : '#2e7d32'
+                                    padding: '4px 8px', borderRadius: '12px', fontSize: '0.85em', fontWeight: 'bold', ...getRoleStyle(u.role)
                                 }}>
                                         {u.role.toUpperCase()}
                                     </span>

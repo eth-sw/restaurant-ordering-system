@@ -29,7 +29,7 @@ router.post('/', optionalAuth, async (req, res) => {
         }
 
         // Confirms customer delivery info is present
-        if (!customerInfo || !customerInfo.address || !customerInfo.phone || !customerInfo.name) {
+        if (!customerInfo?.address || !customerInfo?.phone || !customerInfo?.name || !customerInfo?.email) {
             return res.status(400).json({message: "Missing delivery information"})
         }
 
@@ -136,7 +136,7 @@ router.patch('/:id/status', auth, roleCheck(['staff', 'supervisor', 'admin']), a
         await order.save();
 
         // Check for guest phone number first, otherwise use user account phone number
-        const phoneToSend = order.customerInfo?.phone || (order.user && order.user.phone);
+        const phoneToSend = order.customerInfo?.phone || order.user?.phone;
 
         if (phoneToSend) {
             await sendOrderUpdateSMS(phoneToSend, status, order._id);
@@ -148,5 +148,25 @@ router.patch('/:id/status', auth, roleCheck(['staff', 'supervisor', 'admin']), a
         res.status(500).send('Server Error');
     }
 });
+
+/**
+ * GET: Track order (Public/Guest route)
+ * Allows guest to view their live order status using their order ID without needed to authenticate.
+ * Used on OrderSuccess screen.
+ *
+ * @param req HTTP Request object (body contains order ID)
+ * @param res HTTP Response object
+ * @returns {Object} JSON object of requested order
+ */
+router.get('/track/:id', async (req, res) => {
+    try {
+        const order = await Order.findById(req.params.id);
+        if (!order) return res.status(404).json({ message: "Order not found" });
+        res.json(order);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({message: "Server Error"});
+    }
+})
 
 module.exports = router;

@@ -44,7 +44,7 @@ router.post('/check-availability', async (req, res) => {
 
             try {
                 // Check restaurant has valid location set
-                if (restaurant.location && restaurant.location.coordinates) {
+                if (restaurant.location?.coordinates) {
                     const originLat = restaurant.location.coordinates[1];
                     const originLng = restaurant.location.coordinates[0];
                     const apiKey = process.env.GOOGLE_MAPS_API_KEY;

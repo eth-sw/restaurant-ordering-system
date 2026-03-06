@@ -2,7 +2,7 @@ require('dotenv').config(); // Load environment variables from .env file
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
-const path = require('path');
+const path = require('node:path');
 
 // Using Express framework
 const app = express();
