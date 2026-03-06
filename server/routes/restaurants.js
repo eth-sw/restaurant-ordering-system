@@ -81,7 +81,7 @@ router.patch('/status', auth, roleCheck(['admin', 'supervisor']), async (req, re
  * Protected route: Only admins can update these details
  */
 router.put('/', auth, roleCheck(['admin']), async (req, res) => {
-    const {name, address, phone, email, deliveryFee, cuisine} = req.body;
+    const {name, address, phone, email, deliveryFee, cuisine, location} = req.body;
 
     try {
         let restaurant = await Restaurant.findOne();
@@ -89,13 +89,14 @@ router.put('/', auth, roleCheck(['admin']), async (req, res) => {
         if (restaurant) {
             if (name) restaurant.name = name;
             if (address) restaurant.address = address;
+            if (location) restaurant.location = location;
             if (phone) restaurant.phone = phone;
             if (email) restaurant.email = email;
             if (deliveryFee !== undefined) restaurant.deliveryFee = deliveryFee;
             if (cuisine) restaurant.cuisine = cuisine;
             restaurant.updatedAt = Date.now();
         } else {
-            restaurant = new Restaurant({name, address, phone, email, deliveryFee, cuisine});
+            restaurant = new Restaurant({name, address, locaation, phone, email, deliveryFee, cuisine});
         }
 
         await restaurant.save();
