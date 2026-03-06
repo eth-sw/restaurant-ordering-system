@@ -14,6 +14,17 @@ const RestaurantSchema = new mongoose.Schema({
         type: String,
         required: true
     },
+    location: {
+        type: {
+            type: String,
+            enum: ['Point'],
+            default: 'Point'
+        },
+        coordinates: {
+            type: [Number],
+            required: false
+        }
+    },
     cuisine: {
         type: String
     },
@@ -27,7 +38,7 @@ const RestaurantSchema = new mongoose.Schema({
     },
     deliveryFee: {
         type: Number,
-        default: 2.50
+        default: 2.5
     },
     deliveryZone: {
         type: {

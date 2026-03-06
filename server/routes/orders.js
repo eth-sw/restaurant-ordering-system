@@ -6,6 +6,7 @@ const Order = require('../models/Order');
 const Restaurant = require('../models/Restaurant');
 const roleCheck = require("../middleware/roleCheck");
 const {sendOrderUpdateSMS} = require('../utils/sms');
+const MenuItem = require('../models/MenuItem');
 
 /**
  * POST: Create a new order.
@@ -20,7 +21,7 @@ const {sendOrderUpdateSMS} = require('../utils/sms');
  * @author Ethan Swain
  */
 router.post('/', optionalAuth, async (req, res) => {
-    const {items, totalAmount, paymentId, customerInfo} = req.body;
+    const {items, paymentId, customerInfo} = req.body;
 
     try {
         if (!items || items.length === 0) {
@@ -28,7 +29,7 @@ router.post('/', optionalAuth, async (req, res) => {
         }
 
         // Confirms customer delivery info is present
-        if (!customerInfo || !customerInfo.address || !customerInfo.phone || !customerInfo.name) {
+        if (!customerInfo?.address || !customerInfo?.phone || !customerInfo?.name || !customerInfo?.email) {
             return res.status(400).json({message: "Missing delivery information"})
         }
 
@@ -37,12 +38,32 @@ router.post('/', optionalAuth, async (req, res) => {
             return res.status(500).json({message: "Restaurant config missing"});
         }
 
+        let calculatedTotal = 0;
+        const secureItems = [];
+
+        for (let item of items) {
+            const dbItem = await MenuItem.findById(item.menuItem);
+            if (dbItem) {
+                calculatedTotal += (dbItem.price * item.qty);
+                secureItems.push({
+                    menuItem: dbItem._id,
+                    name: dbItem.name,
+                    price: dbItem.price,
+                    qty: item.qty
+                })
+            }
+        }
+
+        if (restaurant.deliveryFee) {
+            calculatedTotal += restaurant.deliveryFee;
+        }
+
         const newOrder = new Order({
             user: req.user ? req.user.id : null, // Set user ID if logged in, otherwise null
             customerInfo,
             restaurant: restaurant._id,
-            items,
-            totalAmount,
+            items: secureItems,
+            totalAmount: calculatedTotal,
             paymentId: paymentId || null,
             status: paymentId ? 'Accepted' : 'Pending'
         });
@@ -51,7 +72,7 @@ router.post('/', optionalAuth, async (req, res) => {
         res.json(order);
 
     } catch (err) {
-        console.error("Error: ", err.message);
+        console.error(err);
         res.status(500).send('Server Error');
     }
 });
@@ -69,7 +90,7 @@ router.get('/', auth, async (req, res) => {
         const orders = await Order.find({user: req.user.id}).sort({createdAt: -1});
         res.json(orders);
     } catch (err) {
-        console.error("Error: ", err.message);
+        console.error(err);
         res.status(500).send('Server Error');
     }
 });
@@ -89,7 +110,7 @@ router.get('/all', auth, roleCheck(['staff', 'supervisor', 'admin']), async (req
             .sort({createdAt: -1});
         res.json(orders);
     } catch (err) {
-        console.error("Error: ", err.message);
+        console.error(err);
         res.status(500).send('Server Error');
     }
 });
@@ -115,7 +136,7 @@ router.patch('/:id/status', auth, roleCheck(['staff', 'supervisor', 'admin']), a
         await order.save();
 
         // Check for guest phone number first, otherwise use user account phone number
-        const phoneToSend = order.customerInfo?.phone || (order.user && order.user.phone);
+        const phoneToSend = order.customerInfo?.phone || order.user?.phone;
 
         if (phoneToSend) {
             await sendOrderUpdateSMS(phoneToSend, status, order._id);
@@ -123,9 +144,29 @@ router.patch('/:id/status', auth, roleCheck(['staff', 'supervisor', 'admin']), a
 
         res.json(order);
     } catch (err) {
-        console.error("Error: ", err.message);
+        console.error(err);
         res.status(500).send('Server Error');
     }
 });
+
+/**
+ * GET: Track order (Public/Guest route)
+ * Allows guest to view their live order status using their order ID without needed to authenticate.
+ * Used on OrderSuccess screen.
+ *
+ * @param req HTTP Request object (body contains order ID)
+ * @param res HTTP Response object
+ * @returns {Object} JSON object of requested order
+ */
+router.get('/track/:id', async (req, res) => {
+    try {
+        const order = await Order.findById(req.params.id);
+        if (!order) return res.status(404).json({ message: "Order not found" });
+        res.json(order);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({message: "Server Error"});
+    }
+})
 
 module.exports = router;

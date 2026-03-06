@@ -49,7 +49,7 @@ const RestaurantOrders = () => {
             fetchOrders();
         } catch (err) {
             console.error(err);
-            setMessage("Error: Could not update status.");
+            setError("Error: Could not update status.");
         }
     };
 
@@ -103,7 +103,7 @@ const RestaurantOrders = () => {
 
                     <ul style={{listStyleType: 'none', padding: 0}}>
                         {order.items.map((item, i) => (
-                            <li key={i} style={{padding: '5px 0'}}>
+                            <li key={item.menuItem || item._id || i} style={{padding: '5px 0'}}>
                                 <span style={{fontWeight: 'bold', marginRight: '10px'}}>{item.qty}x</span>
                                 {item.name}
                             </li>

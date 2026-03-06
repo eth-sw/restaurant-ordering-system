@@ -1,6 +1,10 @@
-import {useEffect, useState} from 'react';
+import {useEffect, useState, useRef} from 'react';
 import axios from 'axios';
 import {useNavigate} from 'react-router-dom';
+import {useJsApiLoader} from '@react-google-maps/api';
+import {geocodeAddress} from '../utils/geocoding';
+
+const libraries = ['places', 'drawing'];
 
 /**
  * AdminSettings Component.
@@ -13,6 +17,14 @@ import {useNavigate} from 'react-router-dom';
  */
 const AdminSettings = () => {
     const navigate = useNavigate();
+
+    const {isLoaded} = useJsApiLoader({
+        id: 'google-map-script',
+        googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY,
+        libraries: libraries
+    });
+
+    const autocompleteContainerRef = useRef(null);
 
     // Predefined list of cuisines for dropdown menu
     const cuisineOptions = [
@@ -30,15 +42,17 @@ const AdminSettings = () => {
         deliveryFee: 0
     });
 
+    const [locationCoords, setLocationCoords] = useState(null);
+
     // UI feedback
     const [message, setMessage] = useState('');
+    const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
 
     const {name, address, phone, email, cuisine, deliveryFee} = formData;
 
     /**
      * Fetches current restaurant settings.
-     * Ensures phone number has a +44 prefix.
      */
     useEffect(() => {
         const fetchSettings = async () => {
@@ -63,19 +77,57 @@ const AdminSettings = () => {
                         cuisine: config.cuisine || '',
                         deliveryFee: config.deliveryFee || 0,
                     });
+
+                    if (config.location?.coordinates) {
+                        setLocationCoords(config.location.coordinates);
+                    }
                 }
             } catch (err) {
-                console.error("Error fetching settings:", err);
-                setMessage('Error: Could not load restaurant settings');
+                console.error(err);
+                setError('Error: Could not load restaurant settings');
             }
         };
         fetchSettings();
     }, []);
 
     /**
-     * Handles input changes across all form fields.
-     * Ensures phone number has a +44 prefix.
+     * Initialise Google Places Web Component
      */
+    useEffect(() => {
+        if (!isLoaded || !autocompleteContainerRef.current) return;
+
+        autocompleteContainerRef.current.innerHTML = '';
+
+        const placeAutocomplete = new google.maps.places.PlaceAutocompleteElement();
+
+        placeAutocomplete.setAttribute('placeholder', 'Search for restaurant address...');
+        placeAutocomplete.style.width = '100%';
+        placeAutocomplete.style.height = '40px';
+
+        autocompleteContainerRef.current.appendChild(placeAutocomplete);
+
+        placeAutocomplete.addEventListener('gmp-placeselect', async (e) => {
+            if (!e.place) return;
+
+            await e.place.fetchFields({ fields: ['formattedAddress', 'location']});
+
+            if (e.place.formattedAddress && e.place.location) {
+                setFormData(prev => ({ ...prev, address: e.place.formattedAddress }));
+
+                setLocationCoords([
+                    e.place.location.lng(),
+                    e.place.location.lat()
+                ]);
+            }
+        });
+
+        return () => {
+            if (autocompleteContainerRef.current) {
+                autocompleteContainerRef.current.innerHTML = '';
+            }
+        };
+    }, [isLoaded]);
+
     const onChange = (e) => {
         let {name, value} = e.target;
 
@@ -89,20 +141,51 @@ const AdminSettings = () => {
     };
 
     /**
-     * Pushes the updated config to the backend API.
+     * Pushes the updated config and exact coordinates to the backend API.
      */
     const onSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
         setMessage('');
+        setError('');
 
         try {
             const token = localStorage.getItem('token');
 
-            // Cast delivery fee to a number before sending
+            // Extract text just in case
+            let currentAddressStr = formData.address;
+            const placeElement = autocompleteContainerRef.current?.firstChild;
+            if (placeElement?.value) {
+                currentAddressStr = placeElement.value;
+            }
+
+            if (!currentAddressStr || currentAddressStr.trim() === '') {
+                setError("Error: Please enter a valid restaurant address");
+                setLoading(false);
+                return;
+            }
+
+            let finalCoords = locationCoords;
+            const fallbackCoords = await geocodeAddress(currentAddressStr);
+
+            if (fallbackCoords) {
+                finalCoords = [fallbackCoords.lng, fallbackCoords.lat];
+            }
+
+            if (!finalCoords) {
+                setError("Error: Could not calculate coordinates for that address");
+                setLoading(false);
+                return;
+            }
+
             const payload = {
                 ...formData,
-                deliveryFee: Number(deliveryFee)
+                address: currentAddressStr,
+                deliveryFee: Number(deliveryFee),
+                location: {
+                    type: 'Point',
+                    coordinates: finalCoords
+                }
             };
 
             await axios.put('http://localhost:5000/api/restaurants', payload, {
@@ -115,7 +198,7 @@ const AdminSettings = () => {
             globalThis.scrollTo({top: 0, behavior: 'smooth'});
         } catch (err) {
             console.error(err);
-            setMessage('Error: Could not update settings');
+            setError('Error: Could not update settings');
         } finally {
             setLoading(false);
         }
@@ -140,14 +223,14 @@ const AdminSettings = () => {
 
             {/* Status Message Box */}
             {message && (
-                <div style={{
-                    padding: '15px',
-                    marginBottom: '20px',
-                    borderRadius: '5px',
-                    background: message.includes('Error:') ? '#ffebee' : '#e8f5e9',
-                    color: message.includes('Error:') ? '#c62828' : '#2e7d32'
-                }}>
+                <div style={{ padding: '15px', marginBottom: '20px', borderRadius: '5px', background: '#e8f5e9', color: '#2e7d32' }}>
                     {message}
+                </div>
+            )}
+
+            {error && (
+                <div style={{ padding: '15px', marginBottom: '20px', borderRadius: '5px', background: '#ffebee', color: '#c62828' }}>
+                    {error}
                 </div>
             )}
 
@@ -156,17 +239,30 @@ const AdminSettings = () => {
                 <form onSubmit={onSubmit} style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px'}}>
 
                     {/* Input Fields */}
-                    <input type="text" name="name" value={name} onChange={onChange} placeholder="Restaurant Name"
+                    <input type="text" name="name" value={name} onChange={onChange} placeholder="Restaurant Name" required
+                           style={{padding: '10px', borderRadius: '4px', border: '1px solid #ccc', gridColumn: 'span 2'}}/>
+
+                    {/* Google Maps address box */}
+                    <div style={{ gridColumn: 'span 2' }}>
+                        <label style={{ fontSize: '0.9em', fontWeight: 'bold', color: '#555' }}>Search Address</label>
+                        <div style={{ marginTop: '5px', marginBottom: '10px' }}>
+                            {isLoaded ? (
+                                    <div ref={autocompleteContainerRef} style={{ width: '100%' }}></div>
+                                ) : (
+                                    <input type="text" placeholder="Loading map..." disabled style={{ width: '100%', padding: '10px', borderRadius: '4px', border: '1px solid #ccc' }} />
+                                )}
+                        </div>
+                        {address && (
+                            <input type="text" value={address} readOnly style={{ width: '100%', padding: '10px', backgroundColor: '#e0e0e0',  border: '1px solid #ccc', color: '#555', borderRadius: '4px' }}/>
+                        )}
+                    </div>
+                    <input type="email" name="email" value={email} onChange={onChange} placeholder="Email Address" required
                            style={{padding: '10px', borderRadius: '4px', border: '1px solid #ccc'}}/>
-                    <input type="text" name="address" value={address} onChange={onChange} placeholder="Address"
-                           style={{padding: '10px', borderRadius: '4px', border: '1px solid #ccc'}}/>
-                    <input type="email" name="email" value={email} onChange={onChange} placeholder="Email Address"
-                           style={{padding: '10px', borderRadius: '4px', border: '1px solid #ccc'}}/>
-                    <input type="tel" name="phone" value={phone} onChange={onChange} placeholder="Phone Number (+44...)"
+                    <input type="tel" name="phone" value={phone} onChange={onChange} placeholder="Phone Number (+44...)" required
                            style={{padding: '10px', borderRadius: '4px', border: '1px solid #ccc'}}/>
 
                     {/* Cuisine Dropdown */}
-                    <select name="cuisine" value={cuisine} onChange={onChange}
+                    <select name="cuisine" value={cuisine} onChange={onChange} required
                             style={{padding: '10px', borderRadius: '4px', border: '1px solid #ccc'}}>
                         <option value="" disabled>Select Cuisine Type</option>
                         {cuisineOptions.map(option => (
@@ -174,21 +270,21 @@ const AdminSettings = () => {
                         ))}
                     </select>
 
-                    <input type="number" step="0.01" min="0" name="deliveryFee" value={deliveryFee} onChange={onChange}
-                           required placeholder="Delivery Fee (£)"
+                    <input type="number" step="0.01" min="0" name="deliveryFee" value={deliveryFee} onChange={onChange} required placeholder="Delivery Fee (£)"
                            style={{padding: '10px', borderRadius: '4px', border: '1px solid #ccc'}}/>
 
                     {/* Submit Button */}
                     <button type="submit" disabled={loading} style={{
                         gridColumn: 'span 2',
                         marginTop: '10px',
-                        padding: '10px',
+                        padding: '12px',
                         background: '#1976d2',
                         color: 'white',
                         border: 'none',
                         borderRadius: '4px',
                         cursor: 'pointer',
-                        fontWeight: 'bold'
+                        fontWeight: 'bold',
+                        fontSize: '1.05em'
                     }}>
                         {loading ? 'Saving Changes...' : 'Save Settings'}
                     </button>

@@ -36,7 +36,7 @@ router.post('/check-availability', async (req, res) => {
                     }
                 }
             }
-        })
+        });
 
         if (isInside) {
             // ETA Calculation Logic
@@ -44,7 +44,7 @@ router.post('/check-availability', async (req, res) => {
 
             try {
                 // Check restaurant has valid location set
-                if (restaurant.location && restaurant.location.coordinates) {
+                if (restaurant.location?.coordinates) {
                     const originLat = restaurant.location.coordinates[1];
                     const originLng = restaurant.location.coordinates[0];
                     const apiKey = process.env.GOOGLE_MAPS_API_KEY;
@@ -56,17 +56,22 @@ router.post('/check-availability', async (req, res) => {
                     const matrixRes = await axios.get(`https://maps.googleapis.com/maps/api/distancematrix/json?origins=${origin}&destinations=${destination}&mode=driving&key=${apiKey}`);
 
                     // Parse response
-                    if (matrixRes.data.rows[0].elements[0].status === 'OK') {
+                    if (matrixRes.data.status !== 'OK') {
+                        console.error("Google API rejected request:", matrixRes.data.error_message || matrixRes.data.status);
+                    }
+                    else if (matrixRes.data.rows?.[0]?.elements?.[0]?.status === 'OK') {
                         const travelSeconds = matrixRes.data.rows[0].elements[0].duration.value;
                         const prepTime = 20 * 60;
 
                         // Calculate total minutes
                         const totalMinutes = Math.ceil((travelSeconds + prepTime) / 60);
                         eta = `${totalMinutes} mins`;
+                    } else {
+                        console.error("Google route calculation failed. Status:", matrixRes.data.rows?.[0]?.elements?.[0]?.status);
                     }
                 }
             } catch (calcError) {
-                console.error("ETA Calculation Warning:", calcError.message);
+                console.error("ETA Calculation Warning:", calcError.response?.data || calcError.message);
             }
 
             return res.json({

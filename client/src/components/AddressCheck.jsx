@@ -1,7 +1,6 @@
-import {useState} from "react";
+import {useEffect, useRef, useState} from "react";
 import {useJsApiLoader} from '@react-google-maps/api';
 import {geocodeAddress} from '../utils/geocoding';
-import PropTypes from 'prop-types';
 import axios from 'axios';
 
 const libraries = ['places', 'drawing'];
@@ -9,81 +8,158 @@ const libraries = ['places', 'drawing'];
 /**
  * AddressCheck Component.
  * Allows a customer to enter an address, converts it to coordinates,
- * queries backend to check if it's within restaurant delivery zone.
+ * and queries backend to check if it's within restaurant delivery zone.
  *
- * @param onAddressValidated Callback function for when restaurants are found
  * @returns {React.JSX.Element} Form interface for address input
  *
  * @author Ethan Swain
  */
-export default function AddressCheck({onAddressValidated}) {
-    const [address, setAddress] = useState('');
-    const [loading, setLoading] = useState(false);
-    const [message, setMessage] = useState(null);
-
-    // Load Google Maps script
+const AddressCheck = () => {
     const {isLoaded} = useJsApiLoader({
         id: 'google-map-script',
         googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY,
         libraries: libraries
     });
 
+    const autocompleteContainerRef = useRef(null);
+    const [address, setAddress] = useState(null);
+    const [deliveryCoords, setDeliveryCoords] = useState(null);
+    const [loading, setLoading] = useState(false);
+    const [message, setMessage] = useState('');
+    const [error, setError] = useState('');
+
+    // Initialise Google Places Autocomplete component
+    useEffect(() => {
+        if (!isLoaded || !autocompleteContainerRef.current) return;
+
+        // Clear container to prevent duplicates when React re-renders
+        autocompleteContainerRef.current.innerHTML = '';
+
+        const placeAutocomplete = new google.maps.places.PlaceAutocompleteElement();
+
+        placeAutocomplete.setAttribute('placeholder', 'Enter your address');
+        placeAutocomplete.style.width = '100%';
+        placeAutocomplete.style.height = '42px';
+
+        autocompleteContainerRef.current.appendChild(placeAutocomplete);
+
+        // Listen for address selection from dropdown
+        placeAutocomplete.addEventListener('gmp-placeselect', async (e) => {
+            if (!e.place) return;
+
+            // Request fields needs for geofencing
+            await e.place.fetchFields({fields: ['formattedAddress', 'location']});
+
+            if (e.place.formattedAddress && e.place.location) {
+                setAddress(e.place.formattedAddress);
+                setDeliveryCoords({
+                    lat: e.place.location.lat(),
+                    lng: e.place.location.lng()
+                });
+            }
+        });
+
+        // Cleanup
+        return () => {
+            if (autocompleteContainerRef.current) {
+                autocompleteContainerRef.current.innerHTML = '';
+            }
+        };
+    }, [isLoaded]);
+
     /**
-     * Handles form submission, geocodes the address, and checks API availability.
+     * Handles delivery availability check.
+     * Validates input, gets coordinates, and verifies against backend geofence.
+     * @param e Form submission event
      */
-    const handleCheck = async (e) => {
-        e.preventDefault();
-        setMessage('');
+    const handleCheckAvailability = async (e) => {
+        if (e) e.preventDefault();
         setLoading(true);
+        setMessage('');
+        setError('');
 
         try {
-            // Get lat/lng from Google Geocoding
-            const coords = await geocodeAddress(address);
+            let currentAddressStr = address;
+            const placeElement = autocompleteContainerRef.current?.firstChild;
 
-            // Check if restaurant delivers to these coordinates
+            // Extract text if user didn't click dropdown
+            if (placeElement?.value) {
+                currentAddressStr = placeElement.value;
+                setAddress(currentAddressStr);
+            }
+
+            if (!currentAddressStr || currentAddressStr.trim() === '') {
+                setError("Error: Please enter a delivery address.")
+                setLoading(false);
+                return;
+            }
+
+            let coords = deliveryCoords;
+
+            // Manually geocode if user didn't click dropdown
+            if (!coords) {
+                coords = await geocodeAddress(currentAddressStr);
+            }
+
+            // Verify with backend
             const res = await axios.post('http://localhost:5000/api/geofence/check-availability', {
                 latitude: coords.lat,
                 longitude: coords.lng
             });
 
-            // Handle backend geofence result
             if (res.data.canDeliver) {
-                // Sends data payload back to parent (Home.jsx)
-                onAddressValidated(address, coords, res.data);
+                setMessage(`We can deliver to you. ETA: ${res.data.eta}`);
             } else {
-                setMessage("Sorry, we do not deliver to this location.");
+                setError("Error: This address is outside the delivery zone");
             }
         } catch (err) {
             console.error(err);
-            setMessage("Error: Could not validate location.");
+            setError("Error: Could not validate address");
         } finally {
             setLoading(false);
         }
     };
 
-    if (!isLoaded) return <div>Loading Maps...</div>;
-
     return (
-        <div className="address-check-container"
-             style={{padding: '20px', border: '1px solid #ddd', borderRadius: '8px'}}>
-            <form onSubmit={handleCheck}>
-                <input
-                    type="text"
-                    placeholder="Enter your delivery address..."
-                    value={address}
-                    onChange={(e) => setAddress(e.target.value)}
-                    style={{padding: '10px', width: '70%', marginRight: '10px'}}
-                    required
-                />
-                <button type="submit" disabled={loading} style={{padding: '10px 20px', cursor: 'pointer'}}>
+        <div style={{
+            background: '#fff',
+            border: '1px solid #ddd',
+            borderRadius: '8px',
+            padding: '20px',
+            marginBottom: '20px',
+            maxWidth: '500px',
+            margin: '0 auto'
+        }}>
+            <div style={{display: 'flex', flexDirection: 'column', gap: '10px'}}>
+                {isLoaded ? (
+                    <div ref={autocompleteContainerRef} style={{width: '100%'}}></div>
+                ) : (
+                    <input type="text" placeholder="Loading map..." disabled style={{padding: '10px'}}/>
+                )}
+                <button type="button" onClick={handleCheckAvailability} disabled={loading} style={{
+                    padding: '12px',
+                    background: '#e65100',
+                    color: 'white',
+                    border: 'none',
+                    cursor: 'pointer',
+                    fontWeight: 'bold',
+                }}>
                     {loading ? 'Checking...' : 'Check Availability'}
                 </button>
-            </form>
-            {message && <p style={{color: 'red', marginTop: '10px', fontWeight: 'bold'}}>{message}</p>}
+            </div>
+
+            {message && <p style={{
+                marginTop: '15px',
+                fontWeight: 'bold',
+                color: 'green'
+            }}>{message}</p>}
+            {error && <p style={{
+                marginTop: '15px',
+                fontWeight: 'bold',
+                color: 'red'
+            }}>{error}</p>}
         </div>
-    );
+    )
 }
 
-AddressCheck.propTypes = {
-    onAddressValidated: PropTypes.func.isRequired
-};
+export default AddressCheck;

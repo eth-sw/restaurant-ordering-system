@@ -24,7 +24,6 @@ const AddMenu = () => {
 
     // State to handle success/error messages
     const [message, setMessage] = useState('');
-    const [loading, setLoading] = useState(false);
 
     // Hook to navigate user after creating restaurant successfully
     const navigate = useNavigate();
@@ -44,7 +43,6 @@ const AddMenu = () => {
      */
     const onSubmit = async (e) => {
         e.preventDefault();
-        setLoading(true);
         setMessage('');
 
         try {
@@ -82,8 +80,6 @@ const AddMenu = () => {
         } catch (err) {
             console.error(err);
             setMessage('Error: Could not add menu item');
-        } finally {
-            setLoading(false);
         }
     };
 

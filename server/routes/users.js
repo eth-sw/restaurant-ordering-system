@@ -4,6 +4,7 @@ const bcrypt = require('bcryptjs');
 const auth = require('../middleware/auth');
 const roleCheck = require('../middleware/roleCheck');
 const User = require('../models/User');
+const Log = require('../models/Log');
 
 /**
  * GET: Get all users.
@@ -40,6 +41,12 @@ router.post('/', auth, roleCheck(['admin']), async (req, res) => {
         user.password = await bcrypt.hash(password, salt);
         await user.save();
 
+        await Log.create({
+            action: 'CREATE_USER',
+            description: `Admin created a new ${role} account for ${email}`,
+            adminId: req.user.id
+        });
+
         const userObj = user.toObject();
         delete userObj.password;
 
@@ -66,6 +73,12 @@ router.delete('/:id', auth, roleCheck(['admin']), async (req, res) => {
         }
 
         await User.findByIdAndDelete(req.params.id);
+
+        await Log.create({
+            action: 'DELETE_USER',
+            description: `Admin deleted user account (${user.email})`,
+            adminId: req.user.id
+        })
         res.json({message: 'User removed successfully'});
     } catch (err) {
         console.error("Error deleting user:", err.message);

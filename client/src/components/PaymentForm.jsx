@@ -1,5 +1,6 @@
 import React, {useState} from 'react';
 import {PaymentElement, useElements, useStripe} from "@stripe/react-stripe-js";
+import PropTypes from 'prop-types';
 
 /**
  * PaymentForm Component.
@@ -39,7 +40,7 @@ export default function PaymentForm({onPaymentSuccess}) {
         if (error) {
             setMessage(error.message);
             setIsProcessing(false);
-        } else if (paymentIntent && paymentIntent.status === "succeeded") {
+        } else if (paymentIntent?.status === "succeeded") {
             // Places order in DB if successful
             onPaymentSuccess(paymentIntent.id);
         } else {
@@ -67,3 +68,7 @@ export default function PaymentForm({onPaymentSuccess}) {
         </form>
     );
 }
+
+PaymentForm.propTypes = {
+    onPaymentSuccess: PropTypes.func.isRequired
+};

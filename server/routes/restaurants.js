@@ -3,6 +3,7 @@ const router = express.Router();
 const Restaurant = require('../models/Restaurant');
 const auth = require('../middleware/auth');
 const roleCheck = require("../middleware/roleCheck");
+const Log = require('../models/Log');
 
 /**
  * GET: Retrieve restaurant config.
@@ -16,12 +17,13 @@ const roleCheck = require("../middleware/roleCheck");
 router.get('/', async (req, res) => {
     try {
         const restaurant = await Restaurant.findOne();
-        if (!restaurant) {
+        if (restaurant) {
+            res.json(restaurant);
+        } else {
             return res.status(404).json({message: "No restaurant config found"});
         }
-        res.json(restaurant);
     } catch (err) {
-        console.error(err.message);
+        console.error(err);
         res.status(500).send('Server Error');
     }
 });
@@ -29,20 +31,27 @@ router.get('/', async (req, res) => {
 /**
  * PUT: Update delivery zone.
  * Modifies the geofence polygon.
- * Protected route: Only admins and supervisors can update delivery zone.
+ * Protected route: Only admins can update delivery zone.
  */
-router.put('/zone', auth, roleCheck(['admin', 'supervisor']), async (req, res) => {
+router.put('/zone', auth, roleCheck(['admin']), async (req, res) => {
     try {
         const restaurant = await Restaurant.findOne();
-        if (!restaurant) {
+        if (restaurant) {
+            restaurant.deliveryZone = req.body.deliveryZone;
+            await restaurant.save();
+
+            await Log.create({
+                action: 'UPDATE_SETTINGS',
+                description: `Global restaurant settings updated`,
+                adminId: req.user.id
+            });
+
+            res.json(restaurant);
+        } else {
             return res.status(404).json({message: "Restaurant config not found"});
         }
-
-        restaurant.deliveryZone = req.body.deliveryZone;
-        await restaurant.save();
-        res.json(restaurant);
     } catch (err) {
-        console.error("Zone Update Error: ", err);
+        console.error(err);
         res.status(500).json({message: "Server Error", error: err.message});
     }
 });
@@ -50,49 +59,50 @@ router.put('/zone', auth, roleCheck(['admin', 'supervisor']), async (req, res) =
 router.patch('/status', auth, roleCheck(['admin', 'supervisor']), async (req, res) => {
     try {
         const restaurant = await Restaurant.findOne();
-        if (!restaurant) {
+        if (restaurant) {
+            restaurant.isOpen = !restaurant.isOpen;
+            await restaurant.save();
+
+            res.json({
+                isOpen: restaurant.isOpen,
+                message: restaurant.isOpen ? "Restaurant is OPEN" : "Restaurant is CLOSED"
+            });
+        } else {
             return res.status(404).json({message: "Restaurant config not found"});
         }
-
-        restaurant.isOpen = !restaurant.isOpen;
-        await restaurant.save();
-
-        res.json({
-            isOpen: restaurant.isOpen,
-            message: restaurant.isOpen ? "Restaurant is OPEN" : "Restaurant is CLOSED"
-        });
     } catch (err) {
-        console.error("Status Update Error: ", err);
+        console.error(err);
         res.status(500).json({message: "Server Error"});
     }
 })
 
 /**
  * PUT: Update General Restaurant Settings.
- * Protected route: Only admins and supervisors can update these details
+ * Protected route: Only admins can update these details
  */
-router.put('/', auth, roleCheck(['admin', 'supervisor']), async (req, res) => {
-    const {name, address, phone, email, deliveryFee, cuisine} = req.body;
+router.put('/', auth, roleCheck(['admin']), async (req, res) => {
+    const {name, address, phone, email, deliveryFee, cuisine, location} = req.body;
 
     try {
         let restaurant = await Restaurant.findOne();
 
-        if (!restaurant) {
-            restaurant = new Restaurant({name, address, phone, email, deliveryFee, cuisine});
-        } else {
+        if (restaurant) {
             if (name) restaurant.name = name;
             if (address) restaurant.address = address;
+            if (location) restaurant.location = location;
             if (phone) restaurant.phone = phone;
             if (email) restaurant.email = email;
             if (deliveryFee !== undefined) restaurant.deliveryFee = deliveryFee;
             if (cuisine) restaurant.cuisine = cuisine;
             restaurant.updatedAt = Date.now();
+        } else {
+            restaurant = new Restaurant({name, address, locaation, phone, email, deliveryFee, cuisine});
         }
 
         await restaurant.save();
         res.json(restaurant);
     } catch (err) {
-        console.error("Error updating restaurant settings: ", err);
+        console.error(err);
         res.status(500).json({message: "Server Error"});
     }
 });

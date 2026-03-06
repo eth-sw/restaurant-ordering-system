@@ -2,6 +2,7 @@ import {BrowserRouter as Router, Link, Navigate, Route, Routes} from 'react-rout
 import {BasketProvider} from './context/BasketContext';
 import {useEffect, useState} from 'react';
 import {jwtDecode} from "jwt-decode";
+import PropTypes from 'prop-types';
 
 import Register from './pages/Register';
 import Login from './pages/Login';
@@ -14,6 +15,8 @@ import SetDeliveryZone from './pages/SetDeliveryZone';
 import EditMenu from './pages/EditMenu';
 import AdminUsers from './pages/AdminUsers';
 import AdminSettings from './pages/AdminSettings';
+import AdminLogs from "./pages/AdminLogs";
+import OrderSuccess from "./pages/OrderSuccess";
 
 /**
  * Protected Route Wrapper Component.
@@ -36,10 +39,16 @@ const ProtectedRoute = ({children, allowedRoles}) => {
             return <Navigate to="/" replace/>;
         }
         return children;
-    } catch (e) {
+    } catch (err) {
+        console.error(err);
         return <Navigate to="/login" replace/>;
     }
 }
+
+ProtectedRoute.propTypes = {
+    children: PropTypes.node.isRequired,
+    allowedRoles: PropTypes.arrayOf(PropTypes.string)
+};
 
 /**
  * Main App Component.
@@ -50,7 +59,6 @@ const ProtectedRoute = ({children, allowedRoles}) => {
  */
 function App() {
     const [user, setUser] = useState(null);
-    const [message, setMessage] = useState(null);
 
     // Initialise user state from jwt token and handles synchronisation across multiple tabs/windows
     useEffect(() => {
@@ -58,13 +66,15 @@ function App() {
         if (token) {
             try {
                 setUser(jwtDecode(token).user);
-            } catch (e) {
+            } catch (err) {
                 console.error(err);
-                setMessage("Error: Invalid token");
             }
         }
 
-        // Event listener to sync logout/login state across multiple tabs/windows
+        /**
+         * Event listener to sync logout/login across multiple tabs/windows.
+         * If token changes in localStorage in another tab, tab refreshes.
+         */
         const handleStorageChange = (e) => {
             if (e.key === 'token') {
                 globalThis.location.reload();
@@ -83,10 +93,10 @@ function App() {
         globalThis.location.href = '/login';
     };
 
-    // Role-based helpers for any conditional rendering
-    const isCustomer = user && user.role === 'customer';
-    const isStaff = user && ['staff', 'supervisor', 'admin'].includes(user.role);
-    const isAdmin = user && ['supervisor', 'admin'].includes(user.role);
+    // Role-based helpers for conditional rendering in Nav Bar
+    const isCustomer = user?.role === 'customer';
+    const isStaff = ['staff', 'supervisor', 'admin'].includes(user?.role);
+    const isAdmin = user?.role === 'admin';
 
     return (
         <BasketProvider>
@@ -110,14 +120,17 @@ function App() {
                             }}>
                                 Home
                             </Link>
+                            {/* Staff */}
                             {isStaff && (
                                 <Link to="/kitchen" style={{marginRight: '15px', color: '#d32f2f', fontWeight: 'bold'}}>
                                     Kitchen Orders
                                 </Link>
                             )}
+                            {/* Admin */}
                             {isAdmin && (
                                 <>
-                                    <Link to="/delivery-zone" style={{marginRight: '15px', color: '#1976d2'}}>
+                                    <Link to="/delivery-zone"
+                                          style={{marginRight: '15px', color: '#1976d2'}}>
                                         Delivery Zone
                                     </Link>
                                     <Link to="/admin/users"
@@ -127,6 +140,10 @@ function App() {
                                     <Link to="/admin/settings"
                                           style={{marginRight: '15px', color: '#e65100', fontWeight: 'bold'}}>
                                         Settings
+                                    </Link>
+                                    <Link to="/admin/logs"
+                                          style={{marginRight: '15px', color: '#424242', fontWeight: 'bold'}}>
+                                        System Logs
                                     </Link>
                                 </>
                             )}
@@ -177,30 +194,39 @@ function App() {
                         <Route path="/register" element={<Register/>}/>
                         <Route path="/login" element={<Login/>}/>
                         <Route path="/checkout" element={<Checkout/>}/>
+                        <Route path="/order-success/:id" element={<OrderSuccess/>}/>
 
+                        {/*Customer routes*/}
                         <Route path="/orders" element={
                             <ProtectedRoute allowedRoles={['customer']}><OrderHistory/></ProtectedRoute>
                         }/>
 
-                        {/* Staff/Admin routes */}
+                        {/* Staff routes */}
                         <Route path="/kitchen" element={
                             <ProtectedRoute
                                 allowedRoles={['staff', 'supervisor', 'admin']}><RestaurantOrders/></ProtectedRoute>
                         }/>
-                        <Route path="/delivery-zone" element={
-                            <ProtectedRoute allowedRoles={['supervisor', 'admin']}><SetDeliveryZone/></ProtectedRoute>
-                        }/>
+
+                        {/* Supervisor routes */}
                         <Route path="/add-menu" element={
                             <ProtectedRoute allowedRoles={['supervisor', 'admin']}><AddMenu/></ProtectedRoute>
                         }/>
                         <Route path="/edit-menu/:id" element={
                             <ProtectedRoute allowedRoles={['supervisor', 'admin']}><EditMenu/></ProtectedRoute>
                         }/>
+
+                        {/* Admin routes */}
+                        <Route path="/delivery-zone" element={
+                            <ProtectedRoute allowedRoles={['admin']}><SetDeliveryZone/></ProtectedRoute>
+                        }/>
                         <Route path="/admin/users" element={
                             <ProtectedRoute allowedRoles={['admin']}><AdminUsers/></ProtectedRoute>
                         }/>
                         <Route path="/admin/settings" element={
-                            <ProtectedRoute allowedRoles={['supervisor', 'admin']}><AdminSettings/></ProtectedRoute>
+                            <ProtectedRoute allowedRoles={['admin']}><AdminSettings/></ProtectedRoute>
+                        }/>
+                        <Route path="/admin/logs" element={
+                            <ProtectedRoute allowedRoles={['admin']}><AdminLogs/></ProtectedRoute>
                         }/>
                     </Routes>
                 </div>
