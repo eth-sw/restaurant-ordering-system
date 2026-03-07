@@ -88,6 +88,7 @@ const Checkout = () => {
     const [message, setMessage] = useState('');
     const [error, setError] = useState('');
     const [clientSecret, setClientSecret] = useState('');
+    const [orderId, setOrderId] = useState(null);
 
     const total = getBasketTotal();
 
@@ -193,7 +194,7 @@ const Checkout = () => {
 
     /**
      * Initialises Stipe Payment Intent on backend.
-     * Passes items to the server so the total is calculated securely.
+     * Create a Pending order in the DB, pass order ID to Stripe to link them, render Stripe payment form
      */
     const initPayment = async () => {
         setLoading(true);
@@ -203,14 +204,30 @@ const Checkout = () => {
             const token = localStorage.getItem('token');
             const headers = token ? {'x-auth-token': token} : {};
 
-            const payload = {
-                items: basketItems.map(item => ({ menuItem: item._id, qty: item.qty }))
+            const orderPayload = {
+                items: basketItems.map(item => ({
+                    menuItem: item._id,
+                    name: item.name,
+                    price: item.price,
+                    qty: item.qty,
+                })),
+                totalAmount: total,
+                customerInfo: customerInfo
             };
 
-            const res = await axios.post('http://localhost:5000/api/payment/create-payment-intent', payload, {headers} );
+            const orderRes = await axios.post('http://localhost:5000/api/orders', orderPayload, {headers});
+            const newOrderId = orderRes.data._id;
+            setOrderId(newOrderId);
+
+            const paymentPayload = {
+                amount: Math.round(total * 100),
+                orderId: newOrderId
+            };
+
+            const paymentRes = await axios.post('http://localhost:5000/api/payment/create-payment-intent', paymentPayload, {headers});
 
             // Switches UI to Stripe payment form
-            setClientSecret(res.data.clientSecret);
+            setClientSecret(paymentRes.data.clientSecret);
             setLoading(false);
         } catch (err) {
             console.error(err);
@@ -224,36 +241,13 @@ const Checkout = () => {
      * Redirects to Order Success tracking page.
      * @param paymentId Successful Strip intent ID
      */
-    const handlePlaceOrder = async (paymentId) => {
-        setLoading(true);
-        setMessage('');
-        setError('');
-        try {
-            const token = localStorage.getItem('token');
-            const headers = token ? {'x-auth-token': token} : {};
-
-            const payload = {
-                items: basketItems.map(item => ({
-                    menuItem: item._id,
-                    name: item.name,
-                    price: item.price,
-                    qty: item.qty,
-                })),
-                totalAmount: total,
-                paymentId: paymentId,
-                customerInfo: customerInfo
-            };
-
-            const res = await axios.post('http://localhost:5000/api/orders', payload, {headers});
-
-            setMessage("Order Placed Successfully");
-            clearBasket();
-            navigate(`/order-success/${res.data._id}`);
-
-        } catch (err) {
-            console.error(err);
-            setError("Error: Could not place order.");
-            setLoading(false);
+    const handlePaymentSuccess = () => {
+        setMessage("Payment Successful! Processing order...");
+        clearBasket();
+        if (orderId) {
+            navigate(`/order-success/${orderId}`);
+        } else {
+            navigate('/');
         }
     };
 
@@ -419,7 +413,7 @@ const Checkout = () => {
                 {/* Stripe Payment elements */}
                 {clientSecret && (
                     <Elements stripe={stripePromise} options={{clientSecret}}>
-                        <PaymentForm onPaymentSuccess={handlePlaceOrder}/>
+                        <PaymentForm onPaymentSuccess={handlePaymentSuccess}/>
                     </Elements>
                 )}
             </div>

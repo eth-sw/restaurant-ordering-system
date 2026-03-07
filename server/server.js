@@ -14,8 +14,8 @@ const PORT = process.env.PORT || 5000;
  * @author Ethan Swain
  */
 app.use(cors()); // Allows React frontend to communicate with backend
+app.use('/api/payment/webhook', express.raw({ type: 'application/json' })); // Webhook must be parsed as raw data before express.json converts it
 app.use(express.json()); // Parses JSON payloads from requests
-
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 /**
