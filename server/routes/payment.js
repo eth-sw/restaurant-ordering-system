@@ -3,8 +3,7 @@ const router = express.Router();
 const Stripe = require('stripe');
 const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
 const optionalAuth = require('../middleware/optionalAuth');
-const MenuItem = require('../models/MenuItem');
-const Restaurant = require('../models/Restaurant');
+const Order = require('../models/Order');
 
 /**
  * POST: Create a Stripe payment intent.
@@ -17,35 +16,18 @@ const Restaurant = require('../models/Restaurant');
  */
 router.post('/create-payment-intent', optionalAuth, async (req, res) => {
     try {
-        const { items } = req.body;
-
-        if (!items || items.length === 0) {
-            return res.status(400).json({ message: "No items provided"})
-        }
-
-        let calculatedTotal = 0;
-
-        for (let item of items) {
-            const dbItem = await MenuItem.findById(item.menuItem);
-            if (dbItem) {
-                calculatedTotal += (dbItem.price * item.qty);
-            }
-        }
-
-        const restaurant = await Restaurant.findOne();
-        if (restaurant && restaurant.deliveryFee) {
-            calculatedTotal += restaurant.deliveryFee;
-        }
-
-        const amountInPence = Math.round(calculatedTotal * 100);
+        const { amount, orderId } = req.body;
 
         // Create PaymentIntent with the order amount and currency
         const paymentIntent = await stripe.paymentIntents.create({
-            amount: amountInPence,
+            amount: amount,
             currency: "gbp",
             automatic_payment_methods: {
                 enabled: true,
             },
+            metadata: {
+                orderId: orderId
+            }
         });
 
         res.send({
@@ -55,6 +37,44 @@ router.post('/create-payment-intent', optionalAuth, async (req, res) => {
         console.error(err);
         res.status(500).json({message: "Payment Error"});
     }
+});
+
+/**
+ * POST: Stripe Webhook Endpoint
+ * Stripe servers ping this route when a payment succeeds.
+ */
+router.post('/webhook', async (req, res) => {
+    const sig = req.headers['stripe-signature'];
+    const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
+
+    let event;
+
+    try {
+        event = stripe.webhooks.constructEvent(req.body, sig, endpointSecret);
+    } catch (err) {
+        console.error(err);
+        return res.status(400).send(`Webhook Error: ${err.message}`);
+    }
+
+    if (event.type === 'payment_intent.succeeded') {
+        const paymentIntent = event.data.object;
+        const orderId = paymentIntent.metadata.orderId;
+
+        if (orderId) {
+            try {
+                const order = await Order.findById(orderId);
+                if (order) {
+                    order.status = 'Accepted';
+                    order.paymentId = paymentIntent.id;
+                    await order.save();
+                    console.log(`Order: ${orderId} marked as Accepted via webhook`)
+                }
+            } catch (err) {
+                console.error(err);
+            }
+        }
+    }
+    res.send();
 });
 
 module.exports = router;
